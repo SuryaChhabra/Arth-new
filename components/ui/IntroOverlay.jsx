@@ -57,16 +57,50 @@ export default function IntroOverlay() {
               and walk through any glowing arch to enter a booth.
             </motion.p>
 
-            <motion.button
+            <motion.div
               initial={{ y: 14, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.85 }}
-              whileHover={{ scale: 1.04 }}
-              onClick={() => setStarted(true)}
-              className="mt-10 inline-flex items-center gap-3 px-8 py-3 bg-arth-coral text-white rounded-full font-semibold tracking-wide shadow-soft hover:bg-arth-orange transition"
+              className="relative mt-10 inline-block"
             >
-              Enter the party →
-            </motion.button>
+              {/* Soft pulsing glow halo behind the button */}
+              <motion.span
+                aria-hidden
+                animate={{ opacity: [0.45, 0.85, 0.45], scale: [0.95, 1.08, 0.95] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute inset-0 -z-10 rounded-full blur-2xl"
+                style={{ background: 'radial-gradient(circle, #FF8A6B 0%, rgba(255,138,107,0) 70%)' }}
+              />
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setStarted(true)}
+                className="enter-btn group relative inline-flex items-center gap-3 rounded-full font-semibold tracking-wide"
+                style={{
+                  padding: '14px 32px',
+                  fontSize: '1.05rem',
+                  letterSpacing: '0.04em',
+                  color: '#FBF4EC',
+                  background:
+                    'linear-gradient(135deg, #FF8A6B 0%, #F08A5D 60%, #E07248 100%)',
+                  border: '1px solid rgba(255, 230, 220, 0.55)',
+                  boxShadow:
+                    '0 18px 38px -14px rgba(240, 138, 93, 0.7), 0 4px 12px rgba(91, 58, 85, 0.35), inset 0 1px 0 rgba(255,255,255,0.35)',
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                  cursor: 'pointer',
+                }}
+              >
+                <span>Enter the party</span>
+                <motion.span
+                  animate={{ x: [0, 4, 0] }}
+                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                  aria-hidden
+                  style={{ display: 'inline-block' }}
+                >
+                  →
+                </motion.span>
+              </motion.button>
+            </motion.div>
 
             <motion.p
               initial={{ opacity: 0 }}
