@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1F1228"/>
+      <stop offset="0.55" stop-color="#3B2446"/>
+      <stop offset="1" stop-color="#7B4F6A"/>
+    </linearGradient>
+    <radialGradient id="stagelight" cx="50%" cy="58%" r="40%">
+      <stop offset="0" stop-color="#FFD7A8" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#FFD7A8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7B4F6A"/>
+      <stop offset="1" stop-color="#3B2446"/>
+    </linearGradient>
+    <radialGradient id="haze" cx="50%" cy="100%" r="80%">
+      <stop offset="0" stop-color="#F08A5D" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#F08A5D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1536" height="1024" fill="url(#sky)"/>
+  <rect width="1536" height="1024" fill="url(#haze)"/>
+
+  <!-- Moon -->
+  <circle cx="1380" cy="90" r="14" fill="#FFE7B8" opacity="0.9"/>
+  <circle cx="1380" cy="90" r="22" fill="#FFE7B8" opacity="0.18"/>
+
+  <!-- Distant city silhouette -->
+  <g fill="#1A0F22" opacity="0.85">
+    <rect x="0"   y="190" width="60" height="70"/>
+    <rect x="60"  y="170" width="50" height="90"/>
+    <rect x="110" y="180" width="80" height="80"/>
+    <rect x="190" y="160" width="40" height="100"/>
+    <rect x="230" y="180" width="60" height="80"/>
+    <rect x="290" y="200" width="80" height="60"/>
+    <rect x="370" y="170" width="50" height="90"/>
+    <rect x="420" y="190" width="100" height="70"/>
+    <rect x="520" y="160" width="40" height="100"/>
+    <rect x="560" y="200" width="80" height="60"/>
+    <rect x="640" y="180" width="60" height="80"/>
+    <rect x="700" y="160" width="50" height="100"/>
+    <rect x="750" y="190" width="80" height="70"/>
+    <rect x="830" y="170" width="40" height="90"/>
+    <rect x="870" y="200" width="100" height="60"/>
+    <rect x="970" y="180" width="60" height="80"/>
+    <rect x="1030" y="170" width="50" height="90"/>
+    <rect x="1080" y="190" width="80" height="70"/>
+    <rect x="1160" y="160" width="40" height="100"/>
+    <rect x="1200" y="200" width="80" height="60"/>
+    <rect x="1280" y="180" width="60" height="80"/>
+    <rect x="1340" y="170" width="50" height="90"/>
+    <rect x="1390" y="190" width="80" height="70"/>
+    <rect x="1470" y="200" width="66" height="60"/>
+  </g>
+
+  <!-- Stars -->
+  <g fill="#FFE7B8" opacity="0.7">
+    <circle cx="120" cy="60" r="1.2"/>
+    <circle cx="280" cy="40" r="1.5"/>
+    <circle cx="440" cy="80" r="1.0"/>
+    <circle cx="600" cy="50" r="1.4"/>
+    <circle cx="780" cy="70" r="1.1"/>
+    <circle cx="960" cy="40" r="1.4"/>
+    <circle cx="1100" cy="65" r="1.2"/>
+    <circle cx="1240" cy="50" r="1.0"/>
+    <circle cx="200" cy="110" r="1.0"/>
+    <circle cx="540" cy="110" r="0.9"/>
+    <circle cx="880" cy="100" r="1.2"/>
+    <circle cx="1180" cy="120" r="0.9"/>
+  </g>
+
+  <!-- Ground -->
+  <ellipse cx="768" cy="780" rx="1100" ry="380" fill="url(#ground)"/>
+
+  <!-- Stage glow halo -->
+  <ellipse cx="768" cy="640" rx="500" ry="280" fill="url(#stagelight)"/>
+
+  <!-- Forest silhouettes on left edge -->
+  <g fill="#2A1B2C" opacity="0.85">
+    <ellipse cx="60"  cy="540" rx="80" ry="180"/>
+    <ellipse cx="140" cy="520" rx="70" ry="170"/>
+    <ellipse cx="40"  cy="700" rx="90" ry="200"/>
+    <ellipse cx="120" cy="780" rx="100" ry="220"/>
+  </g>
+  <!-- Forest silhouettes on right edge -->
+  <g fill="#2A1B2C" opacity="0.85">
+    <ellipse cx="1480" cy="540" rx="80" ry="180"/>
+    <ellipse cx="1400" cy="520" rx="70" ry="170"/>
+    <ellipse cx="1500" cy="700" rx="90" ry="200"/>
+    <ellipse cx="1420" cy="780" rx="100" ry="220"/>
+  </g>
+
+  <!-- Booth: So Jao Lounge (top center, big purple dome) -->
+  <g transform="translate(620,140)">
+    <ellipse cx="148" cy="120" rx="170" ry="120" fill="#5B3A78"/>
+    <ellipse cx="148" cy="118" rx="160" ry="110" fill="#7B5A8C"/>
+    <rect x="40" y="115" width="216" height="160" fill="#7B5A8C" rx="8"/>
+    <rect x="40" y="115" width="216" height="20" fill="#9B7FBF"/>
+    <text x="148" y="100" text-anchor="middle" font-size="44" fill="#FFE7B8">🌙</text>
+    <!-- soft fairy lights on the dome rim -->
+    <g fill="#FFD7A8">
+      <circle cx="40"  cy="120" r="3"/>
+      <circle cx="80"  cy="55"  r="3"/>
+      <circle cx="148" cy="40"  r="3"/>
+      <circle cx="216" cy="55"  r="3"/>
+      <circle cx="256" cy="120" r="3"/>
+    </g>
+  </g>
+
+  <!-- Booth: Brain Fog (top left, teal dome) -->
+  <g transform="translate(110,200)">
+    <ellipse cx="120" cy="100" rx="135" ry="95" fill="#4F8A75"/>
+    <ellipse cx="120" cy="98" rx="125" ry="85" fill="#7FBDA6"/>
+    <rect x="20" y="95" width="200" height="140" fill="#7FBDA6" rx="6"/>
+    <rect x="20" y="95" width="200" height="18" fill="#A0D5BC"/>
+    <text x="120" y="80" text-anchor="middle" font-size="40" fill="#FBF4EC">🧠</text>
+  </g>
+
+  <!-- Booth: Hot Flash Chill (top right, coral dome) -->
+  <g transform="translate(1175,210)">
+    <ellipse cx="120" cy="100" rx="135" ry="95" fill="#A85F69"/>
+    <ellipse cx="120" cy="98" rx="125" ry="85" fill="#E08A8A"/>
+    <rect x="20" y="95" width="200" height="140" fill="#E08A8A" rx="6"/>
+    <rect x="20" y="95" width="200" height="18" fill="#F3A6B0"/>
+    <text x="120" y="80" text-anchor="middle" font-size="40" fill="#FBF4EC">🌬️</text>
+  </g>
+
+  <!-- Booth: Normal? Ya Normalized? Wall (bottom left, pink wall) -->
+  <g transform="translate(150,540)">
+    <rect x="0" y="0" width="240" height="180" rx="14" fill="#C24F73"/>
+    <rect x="14" y="14" width="212" height="156" rx="8" fill="#E58AA0"/>
+    <!-- sticky notes -->
+    <rect x="32" y="40" width="40" height="40" fill="#FFD7A8"/>
+    <rect x="80" y="36" width="40" height="40" fill="#C9B8E0"/>
+    <rect x="128" y="42" width="40" height="40" fill="#BFE3D7"/>
+    <rect x="176" y="38" width="40" height="40" fill="#F3A6B0"/>
+    <rect x="50" y="92" width="40" height="40" fill="#F3A6B0"/>
+    <rect x="100" y="96" width="40" height="40" fill="#FFD7A8"/>
+    <rect x="150" y="92" width="40" height="40" fill="#C9B8E0"/>
+    <text x="120" y="170" text-anchor="middle" font-size="22" fill="#FBF4EC">📌</text>
+  </g>
+
+  <!-- Booth: Iron Energy Bar (bottom right, peach kiosk) -->
+  <g transform="translate(1180,560)">
+    <rect x="0" y="0" width="220" height="160" rx="12" fill="#C8623F"/>
+    <rect x="12" y="12" width="196" height="136" rx="8" fill="#F08A5D"/>
+    <rect x="12" y="12" width="196" height="20" fill="#FFD7A8"/>
+    <text x="110" y="100" text-anchor="middle" font-size="44" fill="#FBF4EC">⚡</text>
+    <!-- citrus garnish -->
+    <circle cx="40"  cy="60" r="8" fill="#FFD7A8"/>
+    <circle cx="180" cy="60" r="8" fill="#FFB36B"/>
+  </g>
+
+  <!-- Central stage platform -->
+  <ellipse cx="768" cy="640" rx="220" ry="50" fill="#5B3A78" opacity="0.85"/>
+  <ellipse cx="768" cy="620" rx="200" ry="42" fill="#9B7FBF"/>
+  <ellipse cx="768" cy="618" rx="180" ry="34" fill="#C9B8E0" opacity="0.6"/>
+
+  <!-- Stage arch over the stage with fairy-light strand -->
+  <path d="M 568 580 Q 768 460 968 580" stroke="#5B3A78" stroke-width="6" fill="none"/>
+  <g fill="#FFD7A8">
+    <circle cx="568" cy="580" r="3"/>
+    <circle cx="618" cy="540" r="3"/>
+    <circle cx="668" cy="510" r="3"/>
+    <circle cx="718" cy="490" r="3"/>
+    <circle cx="768" cy="482" r="3"/>
+    <circle cx="818" cy="490" r="3"/>
+    <circle cx="868" cy="510" r="3"/>
+    <circle cx="918" cy="540" r="3"/>
+    <circle cx="968" cy="580" r="3"/>
+  </g>
+
+  <!-- Three performers silhouette on stage -->
+  <g fill="#1F1228">
+    <ellipse cx="720" cy="610" rx="14" ry="34"/>
+    <circle cx="720" cy="580" r="10"/>
+    <ellipse cx="768" cy="612" rx="15" ry="36"/>
+    <circle cx="768" cy="580" r="11"/>
+    <ellipse cx="820" cy="610" rx="14" ry="34"/>
+    <circle cx="820" cy="580" r="10"/>
+  </g>
+
+  <!-- Fairy-light strands across the sky -->
+  <g stroke="#5B3A55" stroke-width="1.2" fill="none">
+    <path d="M 120 220 Q 768 280 1416 220"/>
+    <path d="M 120 280 Q 768 340 1416 280"/>
+    <path d="M 320 180 Q 768 230 1216 180"/>
+  </g>
+  <g fill="#FFD7A8">
+    <!-- strand 1 -->
+    <circle cx="240" cy="240" r="2.5"/>
+    <circle cx="360" cy="252" r="2.5"/>
+    <circle cx="480" cy="262" r="2.5"/>
+    <circle cx="600" cy="270" r="2.5"/>
+    <circle cx="720" cy="276" r="2.5"/>
+    <circle cx="840" cy="276" r="2.5"/>
+    <circle cx="960" cy="270" r="2.5"/>
+    <circle cx="1080" cy="262" r="2.5"/>
+    <circle cx="1200" cy="252" r="2.5"/>
+    <circle cx="1320" cy="240" r="2.5"/>
+    <!-- strand 2 -->
+    <circle cx="240" cy="298" r="2.5" fill="#F3A6B0"/>
+    <circle cx="360" cy="312" r="2.5" fill="#F3A6B0"/>
+    <circle cx="480" cy="322" r="2.5" fill="#F3A6B0"/>
+    <circle cx="600" cy="330" r="2.5" fill="#F3A6B0"/>
+    <circle cx="720" cy="334" r="2.5" fill="#F3A6B0"/>
+    <circle cx="840" cy="334" r="2.5" fill="#F3A6B0"/>
+    <circle cx="960" cy="330" r="2.5" fill="#F3A6B0"/>
+    <circle cx="1080" cy="322" r="2.5" fill="#F3A6B0"/>
+    <circle cx="1200" cy="312" r="2.5" fill="#F3A6B0"/>
+    <circle cx="1320" cy="298" r="2.5" fill="#F3A6B0"/>
+  </g>
+
+  <!-- Path light dots radiating from the stage to each booth -->
+  <g fill="#FFD7A8" opacity="0.85">
+    <!-- to So Jao -->
+    <circle cx="768" cy="540" r="2.5"/>
+    <circle cx="768" cy="490" r="2.5"/>
+    <circle cx="768" cy="440" r="2.5"/>
+    <circle cx="768" cy="390" r="2.5"/>
+    <!-- to Brain Fog -->
+    <circle cx="660" cy="600" r="2.5"/>
+    <circle cx="540" cy="560" r="2.5"/>
+    <circle cx="420" cy="500" r="2.5"/>
+    <circle cx="300" cy="430" r="2.5"/>
+    <!-- to Hot Flash -->
+    <circle cx="876" cy="600" r="2.5"/>
+    <circle cx="996" cy="560" r="2.5"/>
+    <circle cx="1116" cy="500" r="2.5"/>
+    <circle cx="1236" cy="430" r="2.5"/>
+    <!-- to Normalized -->
+    <circle cx="660" cy="680" r="2.5"/>
+    <circle cx="540" cy="720" r="2.5"/>
+    <circle cx="420" cy="740" r="2.5"/>
+    <circle cx="300" cy="730" r="2.5"/>
+    <!-- to Iron -->
+    <circle cx="876" cy="680" r="2.5"/>
+    <circle cx="996" cy="720" r="2.5"/>
+    <circle cx="1116" cy="740" r="2.5"/>
+    <circle cx="1236" cy="730" r="2.5"/>
+  </g>
+
+  <!-- Tiny attendees scattered on the plaza -->
+  <g>
+    <g transform="translate(640,720)" fill="#F08A5D"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(680,740)" fill="#C9B8E0"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(840,740)" fill="#F3A6B0"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(880,720)" fill="#FFD7A8"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(720,760)" fill="#BFE3D7"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(770,770)" fill="#E58AA0"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(820,760)" fill="#F08A5D"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(540,820)" fill="#C9B8E0"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(580,840)" fill="#F3A6B0"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(960,830)" fill="#FFD7A8"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+    <g transform="translate(1010,810)" fill="#BFE3D7"><ellipse cx="0" cy="-12" rx="6" ry="14"/><circle cx="0" cy="-30" r="6" fill="#C99077"/></g>
+  </g>
+
+  <!-- Food cart in lower foreground -->
+  <g transform="translate(560,830)">
+    <rect x="0" y="0" width="160" height="60" rx="6" fill="#A8526E"/>
+    <rect x="0" y="-30" width="160" height="36" fill="#F3A6B0"/>
+    <rect x="0" y="-30" width="160" height="6" fill="#C24F73"/>
+    <!-- stripes -->
+    <rect x="20"  y="-30" width="20" height="36" fill="#FBF4EC" opacity="0.8"/>
+    <rect x="60"  y="-30" width="20" height="36" fill="#FBF4EC" opacity="0.8"/>
+    <rect x="100" y="-30" width="20" height="36" fill="#FBF4EC" opacity="0.8"/>
+    <rect x="140" y="-30" width="20" height="36" fill="#FBF4EC" opacity="0.8"/>
+    <!-- wheels -->
+    <circle cx="20" cy="62" r="10" fill="#1F1228"/>
+    <circle cx="140" cy="62" r="10" fill="#1F1228"/>
+  </g>
+
+  <!-- Bistro tables foreground right -->
+  <g transform="translate(940,860)">
+    <ellipse cx="0" cy="0" rx="40" ry="10" fill="#5B3A55"/>
+    <rect x="-2" y="0" width="4" height="20" fill="#5B3A55"/>
+    <ellipse cx="0" cy="22" rx="20" ry="6" fill="#1F1228" opacity="0.5"/>
+    <!-- candle -->
+    <rect x="-3" y="-12" width="6" height="10" fill="#FBE2C2"/>
+    <circle cx="0" cy="-16" r="3" fill="#FFD7A8"/>
+  </g>
+
+  <!-- Potted plants scattered on the plaza ring -->
+  <g fill="#3D5C3A">
+    <ellipse cx="380" cy="660" rx="14" ry="20"/>
+    <rect x="370" y="660" width="20" height="20" fill="#7A4F38"/>
+    <ellipse cx="1156" cy="660" rx="14" ry="20"/>
+    <rect x="1146" y="660" width="20" height="20" fill="#7A4F38"/>
+    <ellipse cx="490" cy="500" rx="14" ry="20"/>
+    <rect x="480" y="500" width="20" height="20" fill="#7A4F38"/>
+    <ellipse cx="1046" cy="500" rx="14" ry="20"/>
+    <rect x="1036" y="500" width="20" height="20" fill="#7A4F38"/>
+  </g>
+
+  <!-- Subtle vignette to focus the center -->
+  <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+    <stop offset="0.5" stop-color="#000" stop-opacity="0"/>
+    <stop offset="1" stop-color="#000" stop-opacity="0.35"/>
+  </radialGradient>
+  <rect width="1536" height="1024" fill="url(#vignette)"/>
+
+  <!-- Watermark for placeholder identification -->
+  <text x="768" y="1000" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" fill="#FBF4EC" opacity="0.45" letter-spacing="3">
+    PLACEHOLDER · drop your reference image at /public/festival-hero.png to replace
+  </text>
+</svg>

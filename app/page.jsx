@@ -1,10 +1,11 @@
-'use client';
+import FestivalLanding from '@/components/FestivalLanding';
 
-import dynamic from 'next/dynamic';
-
-// 3D scene must be client-only
-const ArthParty = dynamic(() => import('@/components/ArthParty'), { ssr: false });
+export const metadata = {
+  title: 'Arth Party — Women’s health, but make it a vibe.',
+  description:
+    'A nighttime women’s wellness festival by Arth · Emcure. Five booths, real women, real talks. Step into the festival.',
+};
 
 export default function Page() {
-  return <ArthParty />;
+  return <FestivalLanding />;
 }
