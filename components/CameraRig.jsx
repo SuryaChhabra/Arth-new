@@ -18,9 +18,9 @@ const PRESETS = {
     orbit: 0.5,
   },
   sojao: {
-    pos: [0, 4.0, 14.5],
-    look: [0, 2.4, -1.4],
-    orbit: 0.42,
+    pos: [0, 2.4, 10.5],
+    look: [0, 2.3, -1.2],
+    orbit: 0.32,
   },
   wall: {
     pos: [0, 4.2, 11],
