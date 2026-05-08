@@ -17,6 +17,11 @@ const PRESETS = {
     look: [0, 2.6, -2],
     orbit: 0.5,
   },
+  sojao: {
+    pos: [0, 4.0, 14.5],
+    look: [0, 2.4, -1.4],
+    orbit: 0.42,
+  },
   wall: {
     pos: [0, 4.2, 11],
     look: [0, 3.5, -3],
@@ -46,6 +51,8 @@ export default function CameraRig() {
       ? PRESETS.wall
       : activeBooth === 'hub'
       ? PRESETS.hub
+      : activeBooth === 'sojao'
+      ? PRESETS.sojao
       : PRESETS.booth;
 
   useEffect(() => {
