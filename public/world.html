@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arth Party · Women’s health, but make it a vibe.</title>
+<style>
+  :root {
+    --arth-cream:   #FBF4EC;
+    --arth-cream2:  #F4E0CC;
+    --arth-peach:   #FFD7B5;
+    --arth-coral:   #F08A5D;
+    --arth-rose:    #F3A6B0;
+    --arth-pink:    #E58AA0;
+    --arth-lav:     #C9B8E0;
+    --arth-mauve:   #7B5A8C;
+    --arth-mint:    #BFE3D7;
+    --arth-amber:   #FFB86B;
+    --arth-plum:    #2A1B2C;
+    --arth-plum2:   #3B2446;
+    --arth-ink:     #1F1228;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    overflow: hidden;
+    background: linear-gradient(180deg, #2A1B2C 0%, #5B3A55 60%, #C9886B 100%);
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, sans-serif;
+    color: var(--arth-cream);
+  }
+  canvas { display: block; }
+
+  /* ---------- Title banner ---------- */
+  #title-banner {
+    position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+    text-align: center; z-index: 20; pointer-events: none;
+    font-family: 'Fraunces', Georgia, serif;
+  }
+  #title-banner .name {
+    font-size: 30px; font-weight: 700;
+    color: var(--arth-cream);
+    letter-spacing: 0.04em;
+    text-shadow: 0 2px 18px rgba(240,138,93,0.55), 0 0 28px rgba(243,166,176,0.3);
+  }
+  #title-banner .tag {
+    font-size: 13px; font-style: italic; letter-spacing: 0.06em;
+    color: rgba(251,244,236,0.78);
+    margin-top: 2px;
+  }
+  #title-banner .brand {
+    display: inline-block; margin-top: 2px;
+    font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--arth-coral);
+  }
+
+  /* ---------- Controls ---------- */
+  #controls-hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    color: rgba(251,244,236,0.85); font-size: 13px; z-index: 20;
+    background: rgba(31,18,40,0.55); padding: 8px 18px; border-radius: 999px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(214,168,90,0.35);
+  }
+  #controls-hint kbd {
+    background: rgba(255,244,234,0.12); padding: 2px 8px; border-radius: 5px;
+    border: 1px solid rgba(255,244,234,0.22); margin: 0 2px;
+    font-family: 'Inter', sans-serif; font-size: 11px;
+    color: var(--arth-cream);
+  }
+
+  /* ---------- Minimap ---------- */
+  #minimap {
+    position: fixed; bottom: 20px; right: 20px; width: 168px; height: 168px;
+    background: rgba(31,18,40,0.55);
+    border: 1px solid rgba(214,168,90,0.45);
+    border-radius: 14px; z-index: 20; backdrop-filter: blur(10px);
+    padding: 6px;
+    box-shadow: 0 12px 32px -10px rgba(0,0,0,0.4);
+  }
+  #minimap .label {
+    position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+    font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--arth-coral); font-weight: 700;
+  }
+  #minimap canvas { border-radius: 10px; display: block; }
+
+  /* ---------- Proximity indicator ---------- */
+  #proximity-indicator {
+    position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+    color: var(--arth-cream); font-size: 13px; z-index: 20;
+    background: var(--arth-coral); padding: 10px 22px; border-radius: 999px;
+    box-shadow: 0 14px 30px -10px rgba(240,138,93,0.7);
+    opacity: 0; transition: opacity 0.25s, transform 0.25s;
+    transform: translate(-50%, 8px);
+    font-weight: 600; letter-spacing: 0.02em;
+  }
+  #proximity-indicator.visible { opacity: 1; transform: translate(-50%, 0); }
+  #proximity-indicator kbd {
+    background: rgba(255,255,255,0.22); padding: 2px 7px; border-radius: 4px;
+    margin: 0 3px; font-family: inherit; font-size: 11px;
+  }
+
+  /* ---------- Info panel (Arth-branded) ---------- */
+  #info-panel {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
+    width: 500px; max-width: calc(100vw - 32px); max-height: 80vh;
+    background: var(--arth-cream);
+    color: var(--arth-plum);
+    border: 1px solid rgba(42,27,44,0.12);
+    border-radius: 22px; padding: 0;
+    z-index: 100; pointer-events: auto;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.35s ease, visibility 0.35s ease, transform 0.35s ease;
+    overflow: hidden;
+    box-shadow: 0 30px 70px -20px rgba(31,18,40,0.55);
+  }
+  #info-panel.visible {
+    opacity: 1; visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .panel-header {
+    padding: 22px 28px 14px; position: relative;
+    background: linear-gradient(135deg, var(--accent-soft, rgba(240,138,93,0.18)) 0%, transparent 70%);
+    border-bottom: 1px solid rgba(42,27,44,0.06);
+  }
+  .panel-header .eyebrow {
+    font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase;
+    color: var(--accent, var(--arth-coral)); font-weight: 700;
+  }
+  .panel-header h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 26px; font-weight: 700; margin-top: 4px;
+    color: var(--arth-plum);
+    letter-spacing: -0.01em;
+  }
+  .panel-header .subtitle {
+    font-size: 13px; color: rgba(42,27,44,0.62); font-style: italic;
+    margin-top: 2px;
+  }
+  .panel-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(42,27,44,0.06); border: none; color: var(--arth-plum);
+    font-size: 18px; cursor: pointer; pointer-events: auto;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .panel-close:hover { background: rgba(42,27,44,0.12); }
+  .panel-body {
+    padding: 14px 28px 24px;
+    max-height: 56vh; overflow-y: auto;
+  }
+  .panel-body::-webkit-scrollbar { width: 6px; }
+  .panel-body::-webkit-scrollbar-thumb { background: rgba(42,27,44,0.18); border-radius: 3px; }
+
+  .info-section { margin-bottom: 14px; }
+  .info-section h3 {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.3em;
+    color: var(--accent, var(--arth-coral)); margin-bottom: 6px; font-weight: 800;
+  }
+  .info-section p, .info-section li {
+    font-size: 14px; color: rgba(42,27,44,0.86); line-height: 1.55;
+  }
+  .info-section ul { list-style: none; padding: 0; }
+  .info-section li::before {
+    content: '✦ '; color: var(--accent, var(--arth-coral)); font-size: 10px;
+  }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .tag {
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    background: rgba(240,138,93,0.12); color: var(--accent, var(--arth-coral));
+    border: 1px solid rgba(240,138,93,0.25);
+  }
+
+  .next-step {
+    margin-top: 18px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px;
+    background: var(--accent, var(--arth-coral)); color: var(--arth-cream);
+    border: none; border-radius: 999px;
+    font-weight: 700; font-size: 13px; letter-spacing: 0.02em;
+    cursor: pointer; pointer-events: auto;
+    box-shadow: 0 10px 22px -8px rgba(240,138,93,0.55);
+    transition: transform 0.15s;
+  }
+  .next-step:hover { transform: translateY(-1px); }
+
+  /* ---------- Loading ---------- */
+  #loading-screen {
+    position: fixed; inset: 0;
+    background: radial-gradient(circle at 50% 55%, #5B3A55 0%, #1F1228 80%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; z-index: 1000;
+    transition: opacity 0.7s ease;
+  }
+  #loading-screen.fade-out { opacity: 0; pointer-events: none; }
+  #loading-screen .eyebrow {
+    font-size: 11px; letter-spacing: 0.55em; text-transform: uppercase;
+    color: var(--arth-coral); margin-bottom: 14px;
+  }
+  #loading-screen h1 {
+    color: var(--arth-cream); font-family: 'Fraunces', Georgia, serif;
+    font-size: 48px; font-weight: 700;
+    text-shadow: 0 0 30px rgba(243,166,176,0.4);
+    letter-spacing: 0.02em;
+  }
+  #loading-screen .tag {
+    color: rgba(251,244,236,0.7); font-style: italic; margin: 8px 0 24px;
+    font-size: 14px;
+  }
+  .loading-bar {
+    width: 220px; height: 4px; background: rgba(255,255,255,0.1);
+    border-radius: 2px; overflow: hidden;
+  }
+  .loading-bar-fill {
+    width: 0%; height: 100%;
+    background: linear-gradient(90deg, var(--arth-coral), var(--arth-amber));
+    border-radius: 2px; transition: width 0.3s;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="eyebrow">Arth · Emcure presents</div>
+  <h1>Arth Party</h1>
+  <div class="tag">Women’s health, but make it a vibe.</div>
+  <div class="loading-bar"><div class="loading-bar-fill" id="loading-fill"></div></div>
+</div>
+
+<div id="title-banner">
+  <div class="name">Arth Party</div>
+  <div class="tag">Women’s health, but make it a vibe.</div>
+  <div class="brand">by Arth · Emcure</div>
+</div>
+
+<div id="controls-hint">
+  <kbd>W A S D</kbd> / <kbd>↑ ↓ ← →</kbd> walk &nbsp;·&nbsp;
+  <kbd>Space</kbd> explore booth &nbsp;·&nbsp;
+  <kbd>Esc</kbd> close
+</div>
+
+<div id="proximity-indicator">Press <kbd>Space</kbd> to explore</div>
+
+<div id="info-panel">
+  <div class="panel-header">
+    <div class="eyebrow" id="panel-eyebrow">arth circle</div>
+    <h2 id="panel-title"></h2>
+    <div class="subtitle" id="panel-subtitle"></div>
+    <button class="panel-close" id="panel-close" aria-label="Close">×</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<div id="minimap">
+  <span class="label">Map</span>
+  <canvas id="minimap-render" width="156" height="156"></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============================================================
+ * ARTH PARTY — low-poly walking world
+ * (structure adapted from the Disney princess world demo)
+ * ============================================================ */
+
+/* ---------- Scene + camera + renderer ---------- */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x3B2446);
+scene.fog = new THREE.FogExp2(0x3B2446, 0.0085);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+camera.position.set(0, 35, 40);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.insertBefore(renderer.domElement, document.body.firstChild);
+
+/* ---------- Lighting (warm event evening) ---------- */
+const ambient = new THREE.AmbientLight(0xFFD7A8, 0.55);
+scene.add(ambient);
+
+const hemi = new THREE.HemisphereLight(0xFFE7B8, 0x5B3A55, 0.45);
+scene.add(hemi);
+
+const keyLight = new THREE.DirectionalLight(0xFFD7A8, 1.05);
+keyLight.position.set(-30, 50, 20);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.width = 2048;
+keyLight.shadow.mapSize.height = 2048;
+keyLight.shadow.camera.near = 0.5;
+keyLight.shadow.camera.far = 200;
+keyLight.shadow.camera.left = -80;
+keyLight.shadow.camera.right = 80;
+keyLight.shadow.camera.top = 80;
+keyLight.shadow.camera.bottom = -80;
+scene.add(keyLight);
+
+const warmFill = new THREE.PointLight(0xF3A6B0, 0.6, 110);
+warmFill.position.set(20, 30, -20);
+scene.add(warmFill);
+
+const coralFill = new THREE.PointLight(0xF08A5D, 0.55, 100);
+coralFill.position.set(-22, 28, 18);
+scene.add(coralFill);
+
+/* ---------- Helper: low-poly block ---------- */
+function block(w, h, d, color, x, y, z, opts = {}) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mat = new THREE.MeshLambertMaterial({
+    color,
+    emissive: opts.emissive || 0,
+    emissiveIntensity: opts.emissiveIntensity || 0,
+    transparent: !!opts.opacity,
+    opacity: opts.opacity != null ? opts.opacity : 1,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+/* ---------- Canvas-text sign helper ---------- */
+function makeSignTexture(lines, opts = {}) {
+  const W = opts.W || 768;
+  const H = opts.H || 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  // bg
+  if (opts.bg) {
+    ctx.fillStyle = opts.bg;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    ctx.clearRect(0, 0, W, H);
+  }
+  // border
+  if (opts.border) {
+    ctx.strokeStyle = opts.border;
+    ctx.lineWidth = opts.borderWidth || 6;
+    ctx.strokeRect(8, 8, W - 16, H - 16);
+  }
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const totalLines = lines.length;
+  lines.forEach((line, i) => {
+    ctx.font = `${line.weight || 700} ${line.size || 60}px ${line.font || '"Fraunces", Georgia, serif'}`;
+    ctx.fillStyle = line.color || '#2A1B2C';
+    const y = (H / (totalLines + 1)) * (i + 1);
+    ctx.fillText(line.text, W / 2, y);
+  });
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.encoding = THREE.sRGBEncoding;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+function makeSignPanel(lines, w, h, opts = {}) {
+  const tex = makeSignTexture(lines, opts);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: !!opts.transparent });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  return mesh;
+}
+
+/* ============================================================
+ * GROUND — cream event floor + radial coral paths + medallion
+ * ============================================================ */
+const groundGroup = new THREE.Group();
+
+// Outer cream base
+const baseGeo = new THREE.PlaneGeometry(220, 220, 1, 1);
+const baseMat = new THREE.MeshLambertMaterial({ color: 0xF4E0CC });
+const baseFloor = new THREE.Mesh(baseGeo, baseMat);
+baseFloor.rotation.x = -Math.PI / 2;
+baseFloor.receiveShadow = true;
+groundGroup.add(baseFloor);
+
+// Slightly lighter inner stage
+const innerStage = new THREE.Mesh(
+  new THREE.CircleGeometry(70, 64),
+  new THREE.MeshLambertMaterial({ color: 0xFBE2C2 })
+);
+innerStage.rotation.x = -Math.PI / 2;
+innerStage.position.y = 0.01;
+innerStage.receiveShadow = true;
+groundGroup.add(innerStage);
+
+scene.add(groundGroup);
+
+/* ---------- Booth data (positions used for paths + minimap) ---------- */
+const BOOTHS = [
+  {
+    id: 'sojao',
+    name: 'So Jao Lounge',
+    short: 'So Jao',
+    position: { x: 0, z: -36 },
+    color: 0xC9B8E0, // lavender
+    accent: '#7B5A8C',
+    accentSoft: 'rgba(123,90,140,0.18)',
+    subtitle: 'Sleep ko lecture nahi, ritual banao.',
+    eyebrow: 'sleep · rituals',
+    iconChar: '☾',
+    sections: [
+      { title: 'What happens here', content: '<p>Visitors explore <strong>phone parking</strong>, <strong>wind-down rituals</strong>, sleep sounds, and a moonlit chaise to actually pause for sixty seconds.</p>' },
+      { title: 'Community layer', content: '<ul><li>“I say I’ll sleep early and suddenly it’s 1:47 am.”</li><li>“My brain wakes up the second the lights go off.”</li><li>“I thought my bad sleep was just a me problem.”</li></ul>' },
+      { title: 'Next step', content: '<p>Join the <strong>Sleep Circle</strong> — soft nights, calmer routines, real talk.</p>' },
+    ],
+    tags: ['Sleep', 'Rituals', 'Sleep Circle'],
+    nextLabel: 'Join Sleep Circle →',
+  },
+  {
+    id: 'iron',
+    name: 'Iron Energy Bar',
+    short: 'Iron',
+    position: { x: 36, z: -12 },
+    color: 0xF08A5D, // coral
+    accent: '#F08A5D',
+    accentSoft: 'rgba(240,138,93,0.18)',
+    subtitle: 'Thakaan ko personality mat banao.',
+    eyebrow: 'fatigue · iron',
+    iconChar: '⚡',
+    sections: [
+      { title: 'What happens here', content: '<p>Visitors explore the <strong>4 PM crash meter</strong>, food pairing tips, iron awareness, and the menu of small habits that quietly add up.</p>' },
+      { title: 'Community layer', content: '<ul><li>“I kept calling myself lazy.”</li><li>“I never connected fatigue with iron.”</li><li>“I need coffee just to function.”</li></ul>' },
+      { title: 'Next step', content: '<p>Join the <strong>Energy Circle</strong> — for women rethinking tiredness as a signal, not a personality.</p>' },
+    ],
+    tags: ['Fatigue', 'Iron', 'Energy Circle'],
+    nextLabel: 'Join Energy Circle →',
+  },
+  {
+    id: 'brainfog',
+    name: 'Brain Fog Booth',
+    short: 'Brain Fog',
+    position: { x: 28, z: 28 },
+    color: 0x7FBDA6, // mint
+    accent: '#3D7A66',
+    accentSoft: 'rgba(127,189,166,0.22)',
+    subtitle: 'Brain fog is not your personality.',
+    eyebrow: 'focus · clarity',
+    iconChar: '🧠',
+    sections: [
+      { title: 'What happens here', content: '<p>Visitors play with <strong>too many tabs</strong>, memory slips, and small clarity resets — the resets that actually fit a real day.</p>' },
+      { title: 'Community layer', content: '<ul><li>“I opened the fridge and forgot why.”</li><li>“I reread the same line five times.”</li><li>“My brain buffers before my period.”</li></ul>' },
+      { title: 'Next step', content: '<p>Join the <strong>Focus Circle</strong> — for women whose minds keep loading, not failing.</p>' },
+    ],
+    tags: ['Brain fog', 'Focus', 'Focus Circle'],
+    nextLabel: 'Join Focus Circle →',
+  },
+  {
+    id: 'hotflash',
+    name: 'Hot Flash Chill Room',
+    short: 'Hot Flash',
+    position: { x: -36, z: -12 },
+    color: 0xE2A6B0, // dusty rose
+    accent: '#B96E80',
+    accentSoft: 'rgba(185,110,128,0.2)',
+    subtitle: 'Moms are not dramatic. They’re under-explained.',
+    eyebrow: 'menopause · mom + me',
+    iconChar: '🌬️',
+    sections: [
+      { title: 'What happens here', content: '<p>A literal cool-down corner where visitors learn what hot flashes feel like, why sleep gets disrupted, and how to start a real conversation with mum.</p>' },
+      { title: 'Community layer', content: '<ul><li>“I didn’t know this was menopause.”</li><li>“My family thought I was overreacting.”</li><li>“I wish I knew how to support my mom better.”</li></ul>' },
+      { title: 'Next step', content: '<p>Join the <strong>Menopause Circle</strong> — bring your mom, bring yourself.</p>' },
+    ],
+    tags: ['Menopause', 'Mom + me', 'Menopause Circle'],
+    nextLabel: 'Join Menopause Circle →',
+  },
+  {
+    id: 'normalized',
+    name: 'Normal? Ya Normalized?',
+    short: 'Normalized',
+    position: { x: -16, z: 34 },
+    color: 0xE58AA0, // mixed pink
+    accent: '#C24F73',
+    accentSoft: 'rgba(194,79,115,0.2)',
+    subtitle: 'If everyone feels it, that does not mean we should ignore it.',
+    eyebrow: 'community · the wall',
+    iconChar: '📌',
+    sections: [
+      { title: 'What happens here', content: '<p>A wall of things women were told to live with. Visitors tap notes, find their own, and get pointed to the circle that gets it.</p>' },
+      { title: 'Community layer', content: '<ul><li>“I thought it was just me.”</li><li>“If everyone feels this, why does nobody talk about it?”</li><li>“This was the first time I saw my exact issue written down.”</li></ul>' },
+      { title: 'Next step', content: '<p>Add a reaction — <em>Same, sis · Seen · Needed this</em> — and find your circle.</p>' },
+    ],
+    tags: ['Same, sis', 'Seen', 'Needed this'],
+    nextLabel: 'Find your circle →',
+  },
+];
+
+/* ---------- Radial coral paths from plaza to each booth ---------- */
+function createPath(x1, z1, x2, z2, width, color = 0xFFB36B) {
+  const dx = x2 - x1, dz = z2 - z1;
+  const len = Math.sqrt(dx * dx + dz * dz);
+  const angle = Math.atan2(dx, dz);
+  const path = block(width, 0.18, len, color, (x1 + x2) / 2, 0.04, (z1 + z2) / 2);
+  path.rotation.y = angle;
+  // softer tone
+  path.material = new THREE.MeshLambertMaterial({ color });
+  path.castShadow = false;
+  path.receiveShadow = true;
+  groundGroup.add(path);
+  // subtle outer glow stripe
+  const glow = block(width + 0.3, 0.04, len, 0xFFC58A, (x1 + x2) / 2, 0.045, (z1 + z2) / 2);
+  glow.rotation.y = angle;
+  glow.material = new THREE.MeshBasicMaterial({ color: 0xFFC58A, transparent: true, opacity: 0.4 });
+  groundGroup.add(glow);
+}
+BOOTHS.forEach((b) => createPath(0, 0, b.position.x, b.position.z, 4));
+
+/* ---------- Plaza medallion + glowing ring ---------- */
+function buildPlazaMedallion() {
+  const g = new THREE.Group();
+  // base disc
+  const baseDisc = new THREE.Mesh(
+    new THREE.CircleGeometry(11, 64),
+    new THREE.MeshLambertMaterial({ color: 0xFFD7B5 })
+  );
+  baseDisc.rotation.x = -Math.PI / 2;
+  baseDisc.position.y = 0.02;
+  baseDisc.receiveShadow = true;
+  g.add(baseDisc);
+
+  // outer ring
+  const outerRing = new THREE.Mesh(
+    new THREE.RingGeometry(10.4, 10.95, 64),
+    new THREE.MeshBasicMaterial({ color: 0xF08A5D })
+  );
+  outerRing.rotation.x = -Math.PI / 2;
+  outerRing.position.y = 0.03;
+  g.add(outerRing);
+
+  // inner ring
+  const innerRing = new THREE.Mesh(
+    new THREE.RingGeometry(7.6, 7.85, 64),
+    new THREE.MeshBasicMaterial({ color: 0xF3A6B0 })
+  );
+  innerRing.rotation.x = -Math.PI / 2;
+  innerRing.position.y = 0.035;
+  g.add(innerRing);
+
+  // glowing edge ring (under the central installation)
+  const glowRing = new THREE.Mesh(
+    new THREE.RingGeometry(2.8, 3.0, 48),
+    new THREE.MeshBasicMaterial({ color: 0xFFB86B, transparent: true, opacity: 0.85 })
+  );
+  glowRing.rotation.x = -Math.PI / 2;
+  glowRing.position.y = 0.045;
+  g.add(glowRing);
+
+  // 24 floor tile dashes
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2;
+    const dash = block(1.4, 0.05, 0.18, 0xF08A5D, Math.cos(a) * 9, 0.05, Math.sin(a) * 9);
+    dash.rotation.y = -a;
+    dash.material = new THREE.MeshBasicMaterial({ color: 0xF08A5D });
+    g.add(dash);
+  }
+
+  return g;
+}
+const plazaMedallion = buildPlazaMedallion();
+scene.add(plazaMedallion);
+
+/* ---------- Central installation: glowing pedestal sign ---------- */
+function buildCentralInstallation() {
+  const g = new THREE.Group();
+
+  // pedestal
+  const pedBase = block(3.2, 0.4, 3.2, 0xF3A6B0, 0, 0.2, 0);
+  g.add(pedBase);
+  const pedColumn = block(1.6, 2.2, 1.6, 0xFBF4EC, 0, 1.4, 0);
+  g.add(pedColumn);
+  // gold trim ring
+  const trim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.95, 0.05, 8, 32),
+    new THREE.MeshLambertMaterial({ color: 0xD6A85A, emissive: 0xD6A85A, emissiveIntensity: 0.4 })
+  );
+  trim.rotation.x = Math.PI / 2;
+  trim.position.set(0, 2.5, 0);
+  g.add(trim);
+
+  // glowing orb
+  const orb = new THREE.Mesh(
+    new THREE.SphereGeometry(0.9, 24, 16),
+    new THREE.MeshBasicMaterial({ color: 0xFFE7B8 })
+  );
+  orb.position.set(0, 3.6, 0);
+  orb.userData.isOrb = true;
+  g.add(orb);
+
+  // halo ring above
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(1.5, 0.06, 8, 48),
+    new THREE.MeshBasicMaterial({ color: 0xF3A6B0, transparent: true, opacity: 0.85 })
+  );
+  halo.position.set(0, 3.6, 0);
+  halo.userData.isHalo = true;
+  g.add(halo);
+
+  // sign panel — high quality canvas text
+  const signTex = makeSignTexture(
+    [
+      { text: 'Your body is not', size: 78, color: '#F08A5D', weight: 700 },
+      { text: 'being dramatic.', size: 78, color: '#2A1B2C', weight: 700 },
+    ],
+    { W: 1024, H: 320, bg: '#FBF4EC', border: '#F08A5D', borderWidth: 8 }
+  );
+  const signMat = new THREE.MeshBasicMaterial({ map: signTex });
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(7, 2.2), signMat);
+  sign.position.set(0, 6.2, 0);
+  sign.userData.isBillboard = true;
+  g.add(sign);
+
+  // glow under the sign
+  const point = new THREE.PointLight(0xFFB86B, 1.2, 24);
+  point.position.set(0, 4.8, 0);
+  g.add(point);
+
+  return g;
+}
+const centralInstallation = buildCentralInstallation();
+scene.add(centralInstallation);
+
+/* ============================================================
+ * BOOTHS — five distinctly shaped pop-up structures
+ * ============================================================ */
+const builtBooths = [];
+const boothLights = [];
+
+// Generic helper: arched entrance frame
+function buildArch(w, h, depth, color) {
+  const g = new THREE.Group();
+  // legs
+  const legL = block(0.45, h, depth, color, -w / 2 + 0.225, h / 2, 0);
+  const legR = block(0.45, h, depth, color, w / 2 - 0.225, h / 2, 0);
+  g.add(legL, legR);
+  // top arc using a torus segment
+  const arc = new THREE.Mesh(
+    new THREE.TorusGeometry(w / 2 - 0.225, 0.45 / 2, 12, 24, Math.PI),
+    new THREE.MeshLambertMaterial({ color })
+  );
+  arc.rotation.x = Math.PI / 2;
+  arc.position.set(0, h, 0);
+  arc.castShadow = true;
+  g.add(arc);
+  // glowing inner edge
+  const innerArc = new THREE.Mesh(
+    new THREE.TorusGeometry(w / 2 - 0.45, 0.05, 8, 24, Math.PI),
+    new THREE.MeshBasicMaterial({ color: 0xD6A85A })
+  );
+  innerArc.rotation.x = Math.PI / 2;
+  innerArc.position.set(0, h, 0.05);
+  g.add(innerArc);
+  return g;
+}
+
+// Booth name floating sign above the booth
+function makeBoothNameSign(name, sub, accent) {
+  const tex = makeSignTexture(
+    [
+      { text: name, size: 64, color: '#2A1B2C', weight: 700, font: '"Fraunces", Georgia, serif' },
+      { text: sub, size: 28, color: accent, weight: 600, font: 'italic 600 28px Inter, sans-serif' },
+    ],
+    { W: 1024, H: 256, bg: '#FBF4EC', border: accent, borderWidth: 6 }
+  );
+  const m = new THREE.MeshBasicMaterial({ map: tex });
+  return new THREE.Mesh(new THREE.PlaneGeometry(7, 1.75), m);
+}
+
+/* ----- 1. So Jao Lounge — lavender lounge with moon ----- */
+function buildSoJaoLounge(pos, data) {
+  const g = new THREE.Group();
+  g.position.set(pos.x, 0, pos.z);
+
+  // Floor pad
+  const pad = new THREE.Mesh(
+    new THREE.CircleGeometry(7, 32),
+    new THREE.MeshLambertMaterial({ color: 0x6F4F8A })
+  );
+  pad.rotation.x = -Math.PI / 2;
+  pad.position.y = 0.05;
+  pad.receiveShadow = true;
+  g.add(pad);
+
+  // Inner rug
+  const rug = new THREE.Mesh(
+    new THREE.CircleGeometry(4.5, 32),
+    new THREE.MeshLambertMaterial({ color: 0xA17A9B })
+  );
+  rug.rotation.x = -Math.PI / 2;
+  rug.position.y = 0.06;
+  g.add(rug);
+
+  // Back wall — curved arch
+  const back = block(8, 5, 0.6, 0x3B2446, 0, 2.5, -3);
+  g.add(back);
+  // gold inner trim line
+  const trim = block(7.5, 0.06, 0.05, 0xD6A85A, 0, 4.6, -2.65);
+  trim.material = new THREE.MeshBasicMaterial({ color: 0xD6A85A });
+  g.add(trim);
+
+  // Side panels (rounded mauve walls)
+  g.add(block(0.5, 4.2, 4, 0x7B5A8C, -3.7, 2.1, -1));
+  g.add(block(0.5, 4.2, 4, 0x7B5A8C, 3.7, 2.1, -1));
+
+  // Header arch with name
+  const arch = buildArch(7, 4.5, 0.5, 0x4A2F62);
+  arch.position.set(0, 0, -2.2);
+  g.add(arch);
+
+  // Chaise
+  g.add(block(3.4, 0.5, 1.5, 0xC58AA0, 0, 0.6, 0.2));
+  g.add(block(1.0, 1.1, 1.5, 0xB07090, -1.2, 1.15, 0.2));
+  g.add(block(2.4, 0.4, 0.4, 0xC58AA0, 0.3, 1.1, -0.4));
+
+  // Cushions
+  g.add(block(0.6, 0.3, 0.6, 0xB8A0C9, -0.6, 1.05, 0.25));
+  g.add(block(0.6, 0.3, 0.6, 0xE2A6B0, 0.0, 1.05, 0.25));
+  g.add(block(0.55, 0.3, 0.55, 0x5C3F5E, 0.55, 1.05, 0.25));
+
+  // Side table + moon lamp
+  g.add(block(0.7, 0.85, 0.7, 0x8B5A3C, 2.2, 0.42, 0.4));
+  const moon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.45, 24, 18),
+    new THREE.MeshBasicMaterial({ color: 0xFFF1CC })
+  );
+  moon.position.set(2.2, 1.3, 0.4);
+  moon.userData.isMoon = true;
+  g.add(moon);
+  // moon point light
+  const moonGlow = new THREE.PointLight(0xFFE7B8, 1.0, 8);
+  moonGlow.position.set(2.2, 1.4, 0.4);
+  g.add(moonGlow);
+
+  // Hanging stars
+  for (let i = 0; i < 5; i++) {
+    const ang = (i / 5) * Math.PI - Math.PI / 2;
+    const sx = Math.cos(ang) * 2.2;
+    const sz = -2.4;
+    const star = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.16, 0),
+      new THREE.MeshBasicMaterial({ color: 0xFFE7B8 })
+    );
+    star.position.set(sx, 3.6 + Math.sin(i) * 0.3, sz);
+    star.userData.isStar = true;
+    star.userData.basePhase = i;
+    g.add(star);
+  }
+
+  // Floating booth-name sign
+  const sign = makeBoothNameSign(data.name, data.subtitle, data.accent);
+  sign.position.set(0, 6.1, -2.7);
+  g.add(sign);
+
+  // Big lavender icon disc on top of arch
+  const iconDisc = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.7, 0.7, 0.18, 32),
+    new THREE.MeshLambertMaterial({ color: 0xD6A85A, emissive: 0xD6A85A, emissiveIntensity: 0.4 })
+  );
+  iconDisc.position.set(0, 5.0, -2.2);
+  iconDisc.rotation.x = Math.PI / 2;
+  g.add(iconDisc);
+  const iconTex = makeSignTexture(
+    [{ text: data.iconChar, size: 180, color: '#3B2446', weight: 700, font: '700 180px serif' }],
+    { W: 256, H: 256, bg: 'rgba(0,0,0,0)' }
+  );
+  const iconMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.2, 1.2),
+    new THREE.MeshBasicMaterial({ map: iconTex, transparent: true })
+  );
+  iconMesh.position.set(0, 5.0, -2.07);
+  g.add(iconMesh);
+
+  // booth point light
+  const pl = new THREE.PointLight(0xC9B8E0, 1.4, 26);
+  pl.position.set(pos.x, 6, pos.z);
+  scene.add(pl);
+  boothLights.push(pl);
+
+  scene.add(g);
+  return g;
+}
+
+/* ----- 2. Iron Energy Bar — coral juice bar ----- */
+function buildIronEnergyBar(pos, data) {
+  const g = new THREE.Group();
+  g.position.set(pos.x, 0, pos.z);
+
+  // Floor pad
+  const pad = new THREE.Mesh(
+    new THREE.CircleGeometry(7, 32),
+    new THREE.MeshLambertMaterial({ color: 0xFFB36B })
+  );
+  pad.rotation.x = -Math.PI / 2;
+  pad.position.y = 0.05;
+  pad.receiveShadow = true;
+  g.add(pad);
+
+  // Bar counter
+  g.add(block(6, 1.2, 1.6, 0xF08A5D, 0, 0.6, 0));
+  // counter top
+  g.add(block(6.4, 0.16, 1.8, 0xFBE2C2, 0, 1.28, 0));
+  // counter trim
+  g.add(block(6, 0.08, 0.05, 0xFBE2C2, 0, 0.18, 0.82));
+
+  // Stools
+  for (let i = -1; i <= 1; i++) {
+    g.add(block(0.06, 0.85, 0.06, 0xFBE2C2, i * 1.6, 0.42, 1.4));
+    const seat = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.32, 0.32, 0.14, 16),
+      new THREE.MeshLambertMaterial({ color: i === 0 ? 0xF3A6B0 : 0xF08A5D })
+    );
+    seat.position.set(i * 1.6, 0.92, 1.4);
+    g.add(seat);
+  }
+
+  // Awning roof — flat angled top
+  const awning = block(7, 0.4, 2.2, 0xFFB36B, 0, 3.2, 0);
+  awning.rotation.x = -0.18;
+  g.add(awning);
+  // awning stripes
+  for (let i = 0; i < 7; i++) {
+    const stripe = block(0.6, 0.1, 2.2, i % 2 === 0 ? 0xFBE2C2 : 0xF08A5D, -3 + i * 1, 3.42, 0);
+    stripe.rotation.x = -0.18;
+    g.add(stripe);
+  }
+
+  // Awning poles
+  g.add(block(0.16, 2.7, 0.16, 0xFBE2C2, -3, 1.85, 0.7));
+  g.add(block(0.16, 2.7, 0.16, 0xFBE2C2, 3, 1.85, 0.7));
+
+  // Fruit bowl
+  const bowl = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.34, 0.22, 0.22, 16),
+    new THREE.MeshLambertMaterial({ color: 0xFBF4EC })
+  );
+  bowl.position.set(-2, 1.45, 0);
+  g.add(bowl);
+  // citrus
+  [
+    [0xF08A5D, -2, 1.66, 0.05],
+    [0xFFD7A8, -1.85, 1.66, -0.05],
+    [0xF3A6B0, -2.15, 1.64, -0.08],
+  ].forEach(([c, x, y, z]) => {
+    const f = new THREE.Mesh(
+      new THREE.SphereGeometry(0.13, 12, 10),
+      new THREE.MeshLambertMaterial({ color: c })
+    );
+    f.position.set(x, y, z);
+    g.add(f);
+  });
+
+  // Drink glasses
+  for (let i = 0; i < 3; i++) {
+    const glass = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.09, 0.07, 0.32, 14),
+      new THREE.MeshLambertMaterial({ color: [0xFFD7A8, 0xF08A5D, 0xFFB36B][i], transparent: true, opacity: 0.85 })
+    );
+    glass.position.set(0.6 + i * 0.5, 1.5, 0.2);
+    g.add(glass);
+  }
+
+  // Energy meter sign — circular
+  const meter = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.95, 0.95, 0.22, 32),
+    new THREE.MeshLambertMaterial({ color: 0xFBF4EC })
+  );
+  meter.rotation.z = Math.PI / 2;
+  meter.position.set(2.6, 2.4, -0.6);
+  g.add(meter);
+  const meterTex = makeSignTexture(
+    [
+      { text: '4 PM', size: 84, color: '#F08A5D', weight: 800 },
+      { text: 'crash meter', size: 36, color: '#2A1B2C', weight: 600, font: '600 36px Inter, sans-serif' },
+    ],
+    { W: 512, H: 512, bg: '#FBF4EC', border: '#F08A5D', borderWidth: 14 }
+  );
+  const meterFace = new THREE.Mesh(
+    new THREE.CircleGeometry(0.92, 32),
+    new THREE.MeshBasicMaterial({ map: meterTex })
+  );
+  meterFace.position.set(2.6, 2.4, -0.48);
+  g.add(meterFace);
+
+  // Floating booth-name sign
+  const sign = makeBoothNameSign(data.name, data.subtitle, data.accent);
+  sign.position.set(0, 4.6, 0);
+  g.add(sign);
+
+  // Icon disc
+  const iconDisc = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.7, 0.7, 0.18, 32),
+    new THREE.MeshLambertMaterial({ color: 0xFFD7A8, emissive: 0xFFD7A8, emissiveIntensity: 0.4 })
+  );
+  iconDisc.position.set(-2.6, 4.5, 0);
+  iconDisc.rotation.x = Math.PI / 2;
+  g.add(iconDisc);
+  const iconTex = makeSignTexture(
+    [{ text: data.iconChar, size: 200, color: '#F08A5D', weight: 800, font: '800 200px serif' }],
+    { W: 256, H: 256, bg: 'rgba(0,0,0,0)' }
+  );
+  g.add(addBillboard(iconTex, 1.2, 1.2, -2.6, 4.5, 0.13));
+
+  // Booth point light
+  const pl = new THREE.PointLight(0xFFB36B, 1.4, 26);
+  pl.position.set(pos.x, 6, pos.z);
+  scene.add(pl);
+  boothLights.push(pl);
+
+  scene.add(g);
+  return g;
+}
+
+function addBillboard(tex, w, h, x, y, z) {
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, h),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+  );
+  m.position.set(x, y, z);
+  return m;
+}
+
+/* ----- 3. Brain Fog Booth — mint quirky desk ----- */
+function buildBrainFogBooth(pos, data) {
+  const g = new THREE.Group();
+  g.position.set(pos.x, 0, pos.z);
+
+  const pad = new THREE.Mesh(
+    new THREE.CircleGeometry(7, 32),
+    new THREE.MeshLambertMaterial({ color: 0x9FCFB8 })
+  );
+  pad.rotation.x = -Math.PI / 2;
+  pad.position.y = 0.05;
+  pad.receiveShadow = true;
+  g.add(pad);
+
+  // Booth back wall — playful zig
+  g.add(block(7, 5, 0.5, 0xBFE3D7, 0, 2.5, -2.6));
+  // mint trim panels
+  g.add(block(7.5, 0.3, 0.05, 0x7FBDA6, 0, 4.7, -2.32));
+  g.add(block(7.5, 0.3, 0.05, 0xC9B8E0, 0, 0.4, -2.32));
+
+  // Side fins
+  g.add(block(0.4, 3.6, 3, 0x7FBDA6, -3.4, 1.8, -1.2));
+  g.add(block(0.4, 3.6, 3, 0x7FBDA6, 3.4, 1.8, -1.2));
+
+  // Arch
+  const arch = buildArch(6, 4.0, 0.4, 0x3D7A66);
+  arch.position.set(0, 0, -1.8);
+  g.add(arch);
+
+  // Desk + laptop
+  g.add(block(3.4, 0.16, 1.6, 0xFBE2C2, 0, 1.0, -0.2));
+  g.add(block(0.16, 1.0, 1.5, 0xFBE2C2, -1.65, 0.5, -0.2));
+  g.add(block(0.16, 1.0, 1.5, 0xFBE2C2, 1.65, 0.5, -0.2));
+  // laptop body
+  g.add(block(1.2, 0.05, 0.85, 0x4A2F62, 0, 1.08, -0.2));
+  // laptop screen
+  const screen = block(1.2, 0.85, 0.05, 0x4A2F62, 0, 1.55, -0.55);
+  screen.rotation.x = -0.25;
+  g.add(screen);
+  const screenLight = block(1.05, 0.7, 0.06, 0xBFE3D7, 0, 1.55, -0.52, { emissive: 0xBFE3D7, emissiveIntensity: 0.35 });
+  screenLight.rotation.x = -0.25;
+  g.add(screenLight);
+
+  // Floating sticky notes around the booth
+  const noteColors = [0xFFD7A8, 0xC9B8E0, 0xF3A6B0, 0xBFE3D7];
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const r = 4.5;
+    const note = block(0.55, 0.55, 0.05, noteColors[i % noteColors.length], Math.cos(a) * r, 2.5 + Math.sin(i) * 0.6, Math.sin(a) * r * 0.6);
+    note.userData.isFloatingNote = true;
+    note.userData.basePhase = i;
+    note.userData.baseY = note.position.y;
+    g.add(note);
+  }
+
+  // Loading bar — display
+  const loadFrame = block(2.4, 0.5, 0.1, 0xFBF4EC, 2.5, 3.4, -2.55);
+  g.add(loadFrame);
+  const loadFill = block(2.0, 0.34, 0.05, 0x7FBDA6, 2.5 - 0.2, 3.4, -2.5, { emissive: 0x7FBDA6, emissiveIntensity: 0.35 });
+  loadFill.userData.isLoadFill = true;
+  g.add(loadFill);
+
+  // Question mark sculpture
+  const qBase = block(0.4, 0.4, 0.4, 0xC9B8E0, -2.6, 0.4, 0.5);
+  g.add(qBase);
+  const qTex = makeSignTexture(
+    [{ text: '?', size: 220, color: '#3D7A66', weight: 800, font: '800 220px serif' }],
+    { W: 256, H: 256, bg: 'rgba(0,0,0,0)' }
+  );
+  g.add(addBillboard(qTex, 1.4, 1.4, -2.6, 1.6, 0.5));
+
+  // Booth name sign
+  const sign = makeBoothNameSign(data.name, data.subtitle, data.accent);
+  sign.position.set(0, 6.1, -2.6);
+  g.add(sign);
+
+  // Icon disc
+  const iconTex = makeSignTexture(
+    [{ text: data.iconChar, size: 180, color: '#3D7A66', weight: 700, font: '700 180px serif' }],
+    { W: 256, H: 256, bg: 'rgba(0,0,0,0)' }
+  );
+  g.add(addBillboard(iconTex, 1.3, 1.3, 0, 5.0, -2.05));
+
+  const pl = new THREE.PointLight(0xBFE3D7, 1.3, 26);
+  pl.position.set(pos.x, 6, pos.z);
+  scene.add(pl);
+  boothLights.push(pl);
+
+  scene.add(g);
+  return g;
+}
+
+/* ----- 4. Hot Flash Chill Room — cooling fan booth ----- */
+function buildHotFlashChillRoom(pos, data) {
+  const g = new THREE.Group();
+  g.position.set(pos.x, 0, pos.z);
+
+  const pad = new THREE.Mesh(
+    new THREE.CircleGeometry(7, 32),
+    new THREE.MeshLambertMaterial({ color: 0xC8848C })
+  );
+  pad.rotation.x = -Math.PI / 2;
+  pad.position.y = 0.05;
+  pad.receiveShadow = true;
+  g.add(pad);
+
+  // Back wall
+  g.add(block(7, 5, 0.5, 0xE2A6B0, 0, 2.5, -2.6));
+  // soft teal accent panel
+  g.add(block(5.4, 3, 0.06, 0xBFE3D7, 0, 2.6, -2.3));
+
+  // Side fins
+  g.add(block(0.4, 4.2, 3, 0xB07088, -3.4, 2.1, -1.2));
+  g.add(block(0.4, 4.2, 3, 0xB07088, 3.4, 2.1, -1.2));
+
+  // Arch
+  const arch = buildArch(6.4, 4.4, 0.5, 0xB96E80);
+  arch.position.set(0, 0, -1.8);
+  g.add(arch);
+
+  // Big fan sculpture on top — central post + 4 blades
+  const fanPost = block(0.3, 0.6, 0.3, 0x5B3A55, 0, 5.5, -2.4);
+  g.add(fanPost);
+  const fanGroup = new THREE.Group();
+  fanGroup.position.set(0, 5.5, -2.4);
+  for (let i = 0; i < 4; i++) {
+    const blade = block(2.4, 0.06, 0.42, 0xFBE2C2, 1.1, 0, 0);
+    blade.rotation.y = (i / 4) * Math.PI * 2;
+    fanGroup.add(blade);
+  }
+  fanGroup.userData.isFan = true;
+  g.add(fanGroup);
+
+  // Cool armchair nook
+  g.add(block(2.4, 0.5, 1.2, 0xF3A6B0, -1.5, 0.55, 0.4));
+  g.add(block(2.4, 1.0, 0.3, 0xF3A6B0, -1.5, 1.05, -0.05));
+  g.add(block(2.4, 0.5, 1.2, 0xFFD7A8, 1.5, 0.55, 0.4));
+  g.add(block(2.4, 1.0, 0.3, 0xFFD7A8, 1.5, 1.05, -0.05));
+  // Side table between
+  g.add(block(0.7, 0.7, 0.7, 0xFBE2C2, 0, 0.4, 0.2));
+  // Tiny handheld fan on table
+  g.add(block(0.18, 0.32, 0.05, 0xB96E80, 0.0, 0.94, 0.2));
+  g.add(block(0.05, 0.16, 0.05, 0xB96E80, 0.0, 0.7, 0.2));
+
+  // AC remote prop on the wall
+  g.add(block(0.55, 1.0, 0.08, 0xFBF4EC, -2.6, 3.2, -2.3));
+  // remote buttons
+  for (let i = 0; i < 6; i++) {
+    g.add(block(0.12, 0.12, 0.06, 0xBFE3D7, -2.6 + (i % 2) * 0.18 - 0.09, 3.55 - Math.floor(i / 2) * 0.18, -2.24));
+  }
+  // remote screen
+  g.add(block(0.42, 0.18, 0.06, 0xBFE3D7, -2.6, 3.0, -2.24, { emissive: 0xBFE3D7, emissiveIntensity: 0.4 }));
+
+  // Booth name sign
+  const sign = makeBoothNameSign(data.name, data.subtitle, data.accent);
+  sign.position.set(0, 6.4, -2.6);
+  g.add(sign);
+
+  // Icon disc
+  const iconTex = makeSignTexture(
+    [{ text: data.iconChar, size: 180, color: '#B96E80', weight: 700, font: '700 180px serif' }],
+    { W: 256, H: 256, bg: 'rgba(0,0,0,0)' }
+  );
+  g.add(addBillboard(iconTex, 1.3, 1.3, 2.6, 4.6, -2.0));
+
+  const pl = new THREE.PointLight(0xE2A6B0, 1.3, 26);
+  pl.position.set(pos.x, 6, pos.z);
+  scene.add(pl);
+  boothLights.push(pl);
+
+  scene.add(g);
+  return g;
+}
+
+/* ----- 5. Normal? Ya Normalized? Wall — sticky-note installation ----- */
+function buildNormalizedWall(pos, data) {
+  const g = new THREE.Group();
+  g.position.set(pos.x, 0, pos.z);
+
+  const pad = new THREE.Mesh(
+    new THREE.CircleGeometry(8, 32),
+    new THREE.MeshLambertMaterial({ color: 0xCC7090 })
+  );
+  pad.rotation.x = -Math.PI / 2;
+  pad.position.y = 0.05;
+  pad.receiveShadow = true;
+  g.add(pad);
+
+  // Big curved-ish wall — built from three angled panels to suggest a curve
+  const wallColor = 0xFBF4EC;
+  const left = block(4, 5, 0.4, wallColor, 0, 2.5, 0);
+  left.position.set(-3.0, 2.5, -2.0);
+  left.rotation.y = 0.35;
+  g.add(left);
+  const center = block(4.5, 5.3, 0.4, wallColor, 0, 2.65, -2.5);
+  g.add(center);
+  const right = block(4, 5, 0.4, wallColor, 0, 2.5, 0);
+  right.position.set(3.0, 2.5, -2.0);
+  right.rotation.y = -0.35;
+  g.add(right);
+
+  // Header strip
+  g.add(block(11, 0.18, 0.06, 0xF08A5D, 0, 4.7, -2.7));
+  g.add(block(11, 0.18, 0.06, 0xF3A6B0, 0, 0.4, -2.7));
+
+  // Sticky notes on the walls
+  const noteColors = [0xFFD7A8, 0xF3A6B0, 0xC9B8E0, 0xFFB36B, 0xBFE3D7, 0xE58AA0];
+  // Center wall notes
+  for (let i = 0; i < 12; i++) {
+    const x = (i % 4) * 1.0 - 1.5;
+    const y = 1.5 + Math.floor(i / 4) * 1.0;
+    const note = block(0.85, 0.85, 0.08, noteColors[i % noteColors.length], x, y, -2.28);
+    note.rotation.z = (Math.random() - 0.5) * 0.18;
+    g.add(note);
+  }
+  // Left wall notes
+  for (let i = 0; i < 6; i++) {
+    const x = (i % 3) * 1.0 - 1;
+    const y = 1.5 + Math.floor(i / 3) * 1.0;
+    const note = new THREE.Group();
+    const n = block(0.8, 0.8, 0.08, noteColors[(i + 2) % noteColors.length], x, y, 0.05);
+    note.add(n);
+    note.position.set(-3.0, 0, -2.0);
+    note.rotation.y = 0.35;
+    g.add(note);
+  }
+  // Right wall notes
+  for (let i = 0; i < 6; i++) {
+    const x = (i % 3) * 1.0 - 1;
+    const y = 1.5 + Math.floor(i / 3) * 1.0;
+    const note = new THREE.Group();
+    const n = block(0.8, 0.8, 0.08, noteColors[(i + 4) % noteColors.length], x, y, 0.05);
+    note.add(n);
+    note.position.set(3.0, 0, -2.0);
+    note.rotation.y = -0.35;
+    g.add(note);
+  }
+
+  // Glowing center title sign
+  const titleTex = makeSignTexture(
+    [
+      { text: 'Normal?', size: 84, color: '#F08A5D', weight: 800 },
+      { text: 'Ya Normalized?', size: 64, color: '#C24F73', weight: 800 },
+    ],
+    { W: 1024, H: 320, bg: '#FBF4EC', border: '#F08A5D', borderWidth: 8 }
+  );
+  const titleSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(5.5, 1.7),
+    new THREE.MeshBasicMaterial({ map: titleTex })
+  );
+  titleSign.position.set(0, 4.0, -2.27);
+  g.add(titleSign);
+
+  // Reaction stamps on the floor in front
+  const stamps = [
+    { c: 0xF08A5D, text: '❤', x: -2.5 },
+    { c: 0xC9B8E0, text: '✦', x: 0 },
+    { c: 0xBFE3D7, text: '◐', x: 2.5 },
+  ];
+  stamps.forEach((s) => {
+    const cyl = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.5, 0.5, 0.18, 24),
+      new THREE.MeshLambertMaterial({ color: s.c, emissive: s.c, emissiveIntensity: 0.18 })
+    );
+    cyl.position.set(s.x, 0.12, 1.4);
+    g.add(cyl);
+  });
+
+  // Booth name sign (floating high)
+  const sign = makeBoothNameSign(data.name, data.subtitle, data.accent);
+  sign.position.set(0, 6.4, -2.7);
+  g.add(sign);
+
+  // Icon disc
+  const iconTex = makeSignTexture(
+    [{ text: data.iconChar, size: 180, color: '#C24F73', weight: 700, font: '700 180px serif' }],
+    { W: 256, H: 256, bg: 'rgba(0,0,0,0)' }
+  );
+  g.add(addBillboard(iconTex, 1.3, 1.3, -4.5, 4.4, -2.0));
+  g.add(addBillboard(iconTex, 1.3, 1.3, 4.5, 4.4, -2.0));
+
+  const pl = new THREE.PointLight(0xE58AA0, 1.4, 28);
+  pl.position.set(pos.x, 6, pos.z);
+  scene.add(pl);
+  boothLights.push(pl);
+
+  scene.add(g);
+  return g;
+}
+
+/* ---------- Build all booths ---------- */
+const builders = [
+  buildSoJaoLounge,
+  buildIronEnergyBar,
+  buildBrainFogBooth,
+  buildHotFlashChillRoom,
+  buildNormalizedWall,
+];
+BOOTHS.forEach((b, i) => builtBooths.push(builders[i](b.position, b)));
+
+/* ============================================================
+ * PLAZA DECOR — planters, lamps, attendees, ribbon quotes
+ * ============================================================ */
+function makePlanter(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  // pot
+  const pot = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.45, 0.55, 0.85, 18),
+    new THREE.MeshLambertMaterial({ color: 0x7A4F38 })
+  );
+  pot.position.y = 0.43;
+  g.add(pot);
+  // rim
+  const rim = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.45, 0.08, 18),
+    new THREE.MeshLambertMaterial({ color: 0x5C3F2A })
+  );
+  rim.position.y = 0.88;
+  g.add(rim);
+  // leaves
+  const top = new THREE.Mesh(
+    new THREE.SphereGeometry(0.55, 16, 12),
+    new THREE.MeshLambertMaterial({ color: 0x4F7A4A })
+  );
+  top.position.y = 1.4;
+  g.add(top);
+  const top2 = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 16, 12),
+    new THREE.MeshLambertMaterial({ color: 0x5C8A5C })
+  );
+  top2.position.set(0.25, 1.55, 0.15);
+  g.add(top2);
+  scene.add(g);
+}
+
+function makeLamp(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  // base
+  const post = block(0.18, 2.6, 0.18, 0x5C3F2A, 0, 1.3, 0);
+  g.add(post);
+  // shade
+  const shade = new THREE.Mesh(
+    new THREE.ConeGeometry(0.35, 0.5, 12),
+    new THREE.MeshLambertMaterial({
+      color: 0xFFD7A8,
+      emissive: 0xFFB86B,
+      emissiveIntensity: 0.7,
+    })
+  );
+  shade.position.y = 2.65;
+  g.add(shade);
+  // tiny point light
+  const pl = new THREE.PointLight(0xFFB86B, 0.55, 8);
+  pl.position.set(0, 2.65, 0);
+  g.add(pl);
+  scene.add(g);
+}
+
+// Planters around the medallion
+[
+  [-12, 0], [12, 0], [0, -12], [0, 12],
+  [-9, -9], [9, -9], [-9, 9], [9, 9],
+].forEach(([x, z]) => makePlanter(x, z));
+
+// Event lamps along the paths
+BOOTHS.forEach((b) => {
+  for (let t = 0.32; t < 1; t += 0.34) {
+    const lx = b.position.x * t;
+    const lz = b.position.z * t;
+    // perpendicular offset
+    const ang = Math.atan2(b.position.x, b.position.z);
+    const offX = Math.cos(ang) * 2.6;
+    const offZ = -Math.sin(ang) * 2.6;
+    makeLamp(lx + offX, lz + offZ);
+    makeLamp(lx - offX, lz - offZ);
+  }
+});
+
+/* ---------- Background attendees (low-poly women in pairs) ---------- */
+function makeAttendee(x, z, kurta, pants, hair = 0x241616, rotation = 0) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  g.rotation.y = rotation;
+  // legs
+  g.add(block(0.18, 0.85, 0.18, pants, -0.16, 0.43, 0));
+  g.add(block(0.18, 0.85, 0.18, pants, 0.16, 0.43, 0));
+  // shoes
+  g.add(block(0.22, 0.1, 0.32, 0x3F2A30, -0.16, 0.05, 0.04));
+  g.add(block(0.22, 0.1, 0.32, 0x3F2A30, 0.16, 0.05, 0.04));
+  // torso (kurta)
+  const torso = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.32, 0.36, 0.7, 18),
+    new THREE.MeshLambertMaterial({ color: kurta })
+  );
+  torso.position.y = 1.18;
+  g.add(torso);
+  // upper torso
+  const upper = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.3, 0.32, 0.55, 18),
+    new THREE.MeshLambertMaterial({ color: kurta })
+  );
+  upper.position.y = 1.7;
+  g.add(upper);
+  // shoulders
+  const shoulder = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 14, 10),
+    new THREE.MeshLambertMaterial({ color: 0xC99077 })
+  );
+  shoulder.position.y = 2.0;
+  g.add(shoulder);
+  // arms
+  g.add(block(0.14, 0.6, 0.14, kurta, -0.4, 1.7, 0));
+  g.add(block(0.14, 0.6, 0.14, kurta, 0.4, 1.7, 0));
+  // head
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 18, 14),
+    new THREE.MeshLambertMaterial({ color: 0xC99077 })
+  );
+  head.position.y = 2.32;
+  g.add(head);
+  // hair bun
+  const bun = new THREE.Mesh(
+    new THREE.SphereGeometry(0.2, 14, 10),
+    new THREE.MeshLambertMaterial({ color: hair })
+  );
+  bun.position.set(0, 2.36, -0.05);
+  g.add(bun);
+  // hair top
+  const hairTop = new THREE.Mesh(
+    new THREE.SphereGeometry(0.225, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55),
+    new THREE.MeshLambertMaterial({ color: hair })
+  );
+  hairTop.position.set(0, 2.36, -0.02);
+  g.add(hairTop);
+  // bindi
+  g.add(block(0.04, 0.04, 0.02, 0xB33A4F, 0, 2.45, 0.2));
+  g.userData.basePhase = Math.random() * Math.PI * 2;
+  g.userData.isAttendee = true;
+  scene.add(g);
+  return g;
+}
+
+const attendees = [];
+attendees.push(makeAttendee(-8, 5, 0xF08A5D, 0x3F2A3A, 0x241616, 0.5));
+attendees.push(makeAttendee(-9.2, 5.6, 0xC9B8E0, 0x3F2A3A, 0x241616, -1.7));
+attendees.push(makeAttendee(7, 6, 0xF3A6B0, 0x3F2A3A, 0x241616, -0.6));
+attendees.push(makeAttendee(8, 5.4, 0xFFD7A8, 0x3F2A3A, 0x3A1E1E, -2.5));
+attendees.push(makeAttendee(-6, -7, 0xBFE3D7, 0x3F2A3A, 0x241616, 2.2));
+attendees.push(makeAttendee(6, -8, 0xE58AA0, 0x3F2A3A, 0x241616, 0.9));
+attendees.push(makeAttendee(13, -3, 0xF08A5D, 0x3F2A3A, 0x241616, 1.7));
+attendees.push(makeAttendee(-13, 3, 0xC9B8E0, 0x3F2A3A, 0x241616, -0.8));
+
+/* ---------- Ribbon quote signs near plaza ---------- */
+function makeRibbonQuote(x, y, z, text, accent, rotation = 0) {
+  const tex = makeSignTexture(
+    [{ text, size: 80, color: '#2A1B2C', weight: 700, font: '"Fraunces", Georgia, serif' }],
+    { W: 768, H: 192, bg: '#FBF4EC', border: accent, borderWidth: 6 }
+  );
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.6, 0.9),
+    new THREE.MeshBasicMaterial({ map: tex })
+  );
+  m.position.set(x, y, z);
+  m.rotation.y = rotation;
+  m.userData.isRibbon = true;
+  m.userData.basePhase = Math.random() * Math.PI * 2;
+  m.userData.baseY = y;
+  scene.add(m);
+}
+
+makeRibbonQuote(-14, 4.5, 6, 'Same, sis.', '#F08A5D', 0.3);
+makeRibbonQuote(14, 4.5, 6, 'You’re not alone.', '#E58AA0', -0.3);
+makeRibbonQuote(-12, 5.4, -8, 'I thought it was just me.', '#C9B8E0', 0.6);
+makeRibbonQuote(12, 5.4, -8, 'Sending this to mom.', '#FFD7A8', -0.6);
+
+/* ============================================================
+ * CHARACTER — mid-aged woman, no crown, coral kurta
+ * ============================================================ */
+const playerGroup = new THREE.Group();
+const playerSpeed = 0.26;
+let playerAngle = 0;
+
+const SKIN = 0xC99077;
+const KURTA = 0xF08A5D;
+const KURTA_TRIM = 0xFBE2C2;
+const PANTS = 0x3F2A3A;
+const SHOE = 0x2A1B2C;
+const HAIR = 0x241616;
+const HAIR_HI = 0x3A1E1E;
+const DUPATTA = 0xF3A6B0;
+const BINDI = 0xB33A4F;
+
+// legs
+const leftLeg = block(0.22, 1.1, 0.22, PANTS, -0.2, 0.55, 0);
+const rightLeg = block(0.22, 1.1, 0.22, PANTS, 0.2, 0.55, 0);
+playerGroup.add(leftLeg, rightLeg);
+// shoes
+playerGroup.add(block(0.27, 0.14, 0.36, SHOE, -0.2, 0.07, 0.05));
+playerGroup.add(block(0.27, 0.14, 0.36, SHOE, 0.2, 0.07, 0.05));
+
+// hips/kurta lower (cylinder for soft look)
+const hips = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.4, 0.45, 0.6, 18),
+  new THREE.MeshLambertMaterial({ color: KURTA })
+);
+hips.position.y = 1.4;
+hips.castShadow = true;
+playerGroup.add(hips);
+
+// kurta hem trim
+const hemTrim = new THREE.Mesh(
+  new THREE.TorusGeometry(0.42, 0.025, 8, 24),
+  new THREE.MeshLambertMaterial({ color: KURTA_TRIM })
+);
+hemTrim.rotation.x = Math.PI / 2;
+hemTrim.position.y = 1.1;
+playerGroup.add(hemTrim);
+
+// torso (kurta upper)
+const torso = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.35, 0.4, 0.6, 18),
+  new THREE.MeshLambertMaterial({ color: KURTA })
+);
+torso.position.y = 1.95;
+torso.castShadow = true;
+playerGroup.add(torso);
+
+// neck trim
+const neckTrim = new THREE.Mesh(
+  new THREE.TorusGeometry(0.18, 0.018, 8, 24, Math.PI),
+  new THREE.MeshLambertMaterial({ color: KURTA_TRIM })
+);
+neckTrim.rotation.x = Math.PI / 2;
+neckTrim.position.set(0, 2.22, 0);
+playerGroup.add(neckTrim);
+
+// dupatta (a draped sash)
+const dupatta = block(0.14, 1.0, 0.05, DUPATTA, 0.18, 1.85, 0);
+dupatta.rotation.z = -0.4;
+playerGroup.add(dupatta);
+
+// arms
+const leftArm = block(0.18, 0.9, 0.18, KURTA, -0.5, 1.85, 0);
+const rightArm = block(0.18, 0.9, 0.18, KURTA, 0.5, 1.85, 0);
+playerGroup.add(leftArm, rightArm);
+// hands (skin)
+playerGroup.add(new THREE.Mesh(
+  new THREE.SphereGeometry(0.1, 14, 10),
+  new THREE.MeshLambertMaterial({ color: SKIN })
+).translateX(-0.5).translateY(1.36));
+playerGroup.add(new THREE.Mesh(
+  new THREE.SphereGeometry(0.1, 14, 10),
+  new THREE.MeshLambertMaterial({ color: SKIN })
+).translateX(0.5).translateY(1.36));
+
+// shoulders fill
+const shoulders = new THREE.Mesh(
+  new THREE.SphereGeometry(0.2, 16, 12),
+  new THREE.MeshLambertMaterial({ color: SKIN })
+);
+shoulders.position.y = 2.27;
+playerGroup.add(shoulders);
+
+// neck
+const neck = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.08, 0.09, 0.14, 12),
+  new THREE.MeshLambertMaterial({ color: 0xA56F58 })
+);
+neck.position.y = 2.42;
+playerGroup.add(neck);
+
+// head (sphere — soft, not a cube)
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(0.26, 24, 18),
+  new THREE.MeshLambertMaterial({ color: SKIN })
+);
+head.position.y = 2.62;
+head.castShadow = true;
+playerGroup.add(head);
+
+// hair cap
+const hairCap = new THREE.Mesh(
+  new THREE.SphereGeometry(0.275, 22, 16, 0, Math.PI * 2, 0, Math.PI * 0.6),
+  new THREE.MeshLambertMaterial({ color: HAIR })
+);
+hairCap.position.set(0, 2.62, -0.02);
+playerGroup.add(hairCap);
+
+// low bun
+const bun = new THREE.Mesh(
+  new THREE.SphereGeometry(0.13, 16, 12),
+  new THREE.MeshLambertMaterial({ color: HAIR_HI })
+);
+bun.position.set(0, 2.6, -0.27);
+playerGroup.add(bun);
+
+// hair side strands framing the face
+playerGroup.add(new THREE.Mesh(
+  new THREE.SphereGeometry(0.09, 12, 10),
+  new THREE.MeshLambertMaterial({ color: HAIR })
+).translateX(-0.16).translateY(2.55).translateZ(0.05));
+playerGroup.add(new THREE.Mesh(
+  new THREE.SphereGeometry(0.09, 12, 10),
+  new THREE.MeshLambertMaterial({ color: HAIR })
+).translateX(0.16).translateY(2.55).translateZ(0.05));
+
+// eyes
+playerGroup.add(block(0.045, 0.04, 0.02, 0x1a0f12, -0.09, 2.65, 0.23));
+playerGroup.add(block(0.045, 0.04, 0.02, 0x1a0f12, 0.09, 2.65, 0.23));
+// gentle smile
+playerGroup.add(block(0.16, 0.025, 0.02, 0x9a3a3a, 0, 2.55, 0.24));
+// bindi
+playerGroup.add(block(0.04, 0.04, 0.02, BINDI, 0, 2.78, 0.24));
+// gold earrings
+playerGroup.add(new THREE.Mesh(
+  new THREE.SphereGeometry(0.025, 10, 8),
+  new THREE.MeshLambertMaterial({ color: 0xE2B36F })
+).translateX(-0.255).translateY(2.6));
+playerGroup.add(new THREE.Mesh(
+  new THREE.SphereGeometry(0.025, 10, 8),
+  new THREE.MeshLambertMaterial({ color: 0xE2B36F })
+).translateX(0.255).translateY(2.6));
+
+playerGroup.position.set(0, 0, 6);
+scene.add(playerGroup);
+
+/* ============================================================
+ * CONTROLS
+ * ============================================================ */
+const keys = {};
+document.addEventListener('keydown', (e) => {
+  keys[e.key] = true;
+  if (e.key === ' ' || e.key === 'Escape') e.preventDefault();
+  if (e.key === ' ') handleInteract();
+  if (e.key === 'Escape') closePanel();
+});
+document.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+let panelOpen = false;
+let nearbyBooth = null;
+
+function handleInteract() {
+  if (panelOpen) { closePanel(); return; }
+  if (nearbyBooth !== null) openPanel(nearbyBooth);
+}
+
+function openPanel(index) {
+  const lm = BOOTHS[index];
+  const panel = document.getElementById('info-panel');
+  panel.style.borderColor = lm.accent;
+  panel.style.setProperty('--accent', lm.accent);
+  panel.style.setProperty('--accent-soft', lm.accentSoft);
+
+  document.getElementById('panel-eyebrow').textContent = lm.eyebrow;
+  document.getElementById('panel-title').textContent = lm.name;
+  document.getElementById('panel-subtitle').textContent = lm.subtitle;
+
+  let bodyHTML = '';
+  lm.sections.forEach((s) => {
+    bodyHTML += `<div class="info-section"><h3>${s.title}</h3>${s.content}</div>`;
+  });
+  if (lm.tags) {
+    bodyHTML += '<div class="tag-row">';
+    lm.tags.forEach((t) => { bodyHTML += `<span class="tag">${t}</span>`; });
+    bodyHTML += '</div>';
+  }
+  bodyHTML += `<button class="next-step" id="next-step-btn">${lm.nextLabel || 'Next step →'}</button>`;
+  document.getElementById('panel-body').innerHTML = bodyHTML;
+
+  const btn = document.getElementById('next-step-btn');
+  if (btn) btn.addEventListener('click', closePanel);
+
+  panel.classList.add('visible');
+  panelOpen = true;
+}
+
+function closePanel() {
+  const panel = document.getElementById('info-panel');
+  panel.classList.remove('visible');
+  panelOpen = false;
+}
+document.getElementById('panel-close').addEventListener('click', closePanel);
+
+/* ============================================================
+ * ANIMATION LOOP
+ * ============================================================ */
+let walkCycle = 0;
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const time = clock.getElapsedTime();
+
+  // ----- Player movement -----
+  let moving = false;
+  const moveDir = new THREE.Vector3(0, 0, 0);
+
+  if (!panelOpen) {
+    if (keys['ArrowUp']    || keys['w'] || keys['W']) { moveDir.z -= 1; moving = true; }
+    if (keys['ArrowDown']  || keys['s'] || keys['S']) { moveDir.z += 1; moving = true; }
+    if (keys['ArrowLeft']  || keys['a'] || keys['A']) { moveDir.x -= 1; moving = true; }
+    if (keys['ArrowRight'] || keys['d'] || keys['D']) { moveDir.x += 1; moving = true; }
+  }
+
+  if (moving) {
+    moveDir.normalize().multiplyScalar(playerSpeed);
+    playerGroup.position.x += moveDir.x;
+    playerGroup.position.z += moveDir.z;
+    // clamp
+    playerGroup.position.x = Math.max(-58, Math.min(58, playerGroup.position.x));
+    playerGroup.position.z = Math.max(-58, Math.min(58, playerGroup.position.z));
+    // face direction
+    playerAngle = Math.atan2(moveDir.x, moveDir.z);
+    playerGroup.rotation.y = playerAngle;
+    // walk cycle
+    walkCycle += dt * 8;
+    leftArm.rotation.x = Math.sin(walkCycle) * 0.55;
+    rightArm.rotation.x = -Math.sin(walkCycle) * 0.55;
+    leftLeg.rotation.x = -Math.sin(walkCycle) * 0.42;
+    rightLeg.rotation.x = Math.sin(walkCycle) * 0.42;
+    playerGroup.position.y = Math.abs(Math.sin(walkCycle)) * 0.13;
+  } else {
+    leftArm.rotation.x *= 0.9;
+    rightArm.rotation.x *= 0.9;
+    leftLeg.rotation.x *= 0.9;
+    rightLeg.rotation.x *= 0.9;
+    playerGroup.position.y *= 0.9;
+  }
+
+  // ----- Camera follow (third-person, slightly behind & above) -----
+  const camTarget = new THREE.Vector3(playerGroup.position.x, 0, playerGroup.position.z);
+  const camOffset = new THREE.Vector3(0, 26, 24);
+  const desiredCamPos = camTarget.clone().add(camOffset);
+  camera.position.lerp(desiredCamPos, 0.06);
+  const lookTarget = playerGroup.position.clone();
+  lookTarget.y += 2;
+  camera.lookAt(lookTarget);
+
+  // ----- Proximity detection -----
+  nearbyBooth = null;
+  const proximityIndicator = document.getElementById('proximity-indicator');
+  let minDist = Infinity;
+
+  BOOTHS.forEach((b, i) => {
+    const dx = playerGroup.position.x - b.position.x;
+    const dz = playerGroup.position.z - b.position.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < 12 && dist < minDist) {
+      minDist = dist;
+      nearbyBooth = i;
+    }
+  });
+
+  if (nearbyBooth !== null && !panelOpen) {
+    proximityIndicator.innerHTML = `<strong>${BOOTHS[nearbyBooth].name}</strong> · Press <kbd>Space</kbd> to explore`;
+    proximityIndicator.classList.add('visible');
+  } else {
+    proximityIndicator.classList.remove('visible');
+  }
+
+  // ----- Animate booth lights pulsing -----
+  boothLights.forEach((light, i) => {
+    light.intensity = 1.1 + Math.sin(time * 1.6 + i * 1.2) * 0.35;
+  });
+
+  // ----- Animate central installation orb + halo -----
+  centralInstallation.children.forEach((c) => {
+    if (c.userData.isOrb) {
+      c.scale.setScalar(1 + Math.sin(time * 1.4) * 0.06);
+    }
+    if (c.userData.isHalo) {
+      c.rotation.z = time * 0.3;
+      c.material.opacity = 0.55 + Math.sin(time * 1.3) * 0.2;
+    }
+    if (c.userData.isBillboard) {
+      c.lookAt(camera.position);
+    }
+  });
+
+  // ----- Animate booth-specific things -----
+  builtBooths.forEach((booth, i) => {
+    booth.children.forEach((child) => {
+      if (child.userData.isMoon) {
+        child.material.color.lerp(new THREE.Color(0xFFF1CC), 0.05);
+      }
+      if (child.userData.isStar) {
+        child.position.y = 3.6 + Math.sin(time * 1.2 + child.userData.basePhase) * 0.18;
+        child.rotation.y = time * 0.5;
+      }
+      if (child.userData.isFloatingNote) {
+        child.position.y = child.userData.baseY + Math.sin(time * 1.1 + child.userData.basePhase) * 0.18;
+        child.rotation.z = Math.sin(time * 0.7 + child.userData.basePhase) * 0.18;
+      }
+      if (child.userData.isLoadFill) {
+        const w = 0.4 + (Math.sin(time * 1.5) + 1) * 1.0;
+        child.scale.x = Math.max(0.05, w / 2);
+        child.position.x = 2.5 - 1 + (w / 2);
+      }
+      if (child.userData.isFan) {
+        child.rotation.y += dt * 4;
+      }
+    });
+  });
+
+  // ----- Animate attendees gentle sway -----
+  attendees.forEach((a) => {
+    a.rotation.y += Math.sin(time * 0.4 + a.userData.basePhase) * 0.0015;
+  });
+
+  // ----- Ribbon quotes float -----
+  scene.children.forEach((c) => {
+    if (c.userData && c.userData.isRibbon) {
+      c.position.y = c.userData.baseY + Math.sin(time * 0.7 + c.userData.basePhase) * 0.12;
+      c.lookAt(camera.position);
+    }
+  });
+
+  // ----- Minimap -----
+  drawMinimap();
+
+  renderer.render(scene, camera);
+}
+
+/* ============================================================
+ * MINIMAP (Arth colors, 5 booths)
+ * ============================================================ */
+const minimapCanvas = document.getElementById('minimap-render');
+const mCtx = minimapCanvas.getContext('2d');
+const MAP_RANGE = 70; // world span shown
+const MAP_SIZE = 156;
+
+function worldToMap(wx, wz) {
+  return {
+    x: ((wx + MAP_RANGE) / (MAP_RANGE * 2)) * MAP_SIZE,
+    y: ((wz + MAP_RANGE) / (MAP_RANGE * 2)) * MAP_SIZE,
+  };
+}
+
+function drawMinimap() {
+  const ctx = mCtx;
+  ctx.clearRect(0, 0, MAP_SIZE, MAP_SIZE);
+
+  // bg
+  const grad = ctx.createRadialGradient(MAP_SIZE / 2, MAP_SIZE / 2, 10, MAP_SIZE / 2, MAP_SIZE / 2, MAP_SIZE / 2);
+  grad.addColorStop(0, '#FBE2C2');
+  grad.addColorStop(0.7, '#F4E0CC');
+  grad.addColorStop(1, '#3B2446');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+
+  // plaza ring
+  const center = worldToMap(0, 0);
+  ctx.strokeStyle = 'rgba(240,138,93,0.55)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, 14, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // paths
+  ctx.strokeStyle = 'rgba(255,179,107,0.55)';
+  ctx.lineWidth = 2.4;
+  BOOTHS.forEach((b) => {
+    const to = worldToMap(b.position.x, b.position.z);
+    ctx.beginPath();
+    ctx.moveTo(center.x, center.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+  });
+
+  // booth dots + labels
+  BOOTHS.forEach((b) => {
+    const pos = worldToMap(b.position.x, b.position.z);
+    const hex = '#' + b.color.toString(16).padStart(6, '0');
+    ctx.fillStyle = hex;
+    ctx.shadowColor = hex;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // label
+    ctx.fillStyle = '#2A1B2C';
+    ctx.font = 'bold 8px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(b.short, pos.x, pos.y + 14);
+  });
+
+  // player
+  const playerPos = worldToMap(playerGroup.position.x, playerGroup.position.z);
+  ctx.fillStyle = '#FBF4EC';
+  ctx.shadowColor = '#FBF4EC';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.arc(playerPos.x, playerPos.y, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  // direction indicator
+  const dirX = Math.sin(playerAngle) * 9;
+  const dirY = -Math.cos(playerAngle) * 9;
+  ctx.strokeStyle = '#F08A5D';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(playerPos.x, playerPos.y);
+  ctx.lineTo(playerPos.x + dirX, playerPos.y - dirY);
+  ctx.stroke();
+}
+
+/* ============================================================
+ * RESIZE + LOADING
+ * ============================================================ */
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+let loadProgress = 0;
+const loadingFill = document.getElementById('loading-fill');
+const loadInterval = setInterval(() => {
+  loadProgress += Math.random() * 28;
+  if (loadProgress >= 100) {
+    loadProgress = 100;
+    loadingFill.style.width = '100%';
+    clearInterval(loadInterval);
+    setTimeout(() => {
+      document.getElementById('loading-screen').classList.add('fade-out');
+      setTimeout(() => {
+        document.getElementById('loading-screen').style.display = 'none';
+      }, 800);
+    }, 400);
+  }
+  loadingFill.style.width = loadProgress + '%';
+}, 150);
+
+animate();
+</script>
+</body>
+</html>
