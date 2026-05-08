@@ -132,7 +132,9 @@ export default function SoJaoLounge() {
       <FloorTray position={[-0.55, 0.06, 1.55]} />
       <OpenJournal position={[0.55, 0.06, 1.95]} />
       <SideTable position={[2.5, 0, 0.5]} />
-      <MoonLamp position={[2.5, 1.05, 0.5]} />
+      <MoonLamp position={[2.4, 1.04, 0.45]} />
+      <SideTableProps position={[2.5, 1.04, 0.5]} />
+      <HangingLantern position={[3.6, 0, 0.0]} />
       <SaltLamp position={[-2.6, 0.0, 0.7]} />
 
       {/* ======= Stations (mounted in front of side walls) ======= */}
@@ -939,47 +941,359 @@ function OpenJournal({ position }) {
 }
 
 function SideTable({ position }) {
+  // Short cylindrical ribbed walnut pedestal.
   return (
     <group position={position}>
-      {/* slatted walnut barrel */}
-      <mesh position={[0, 0.5, 0]}>
-        <cylinderGeometry args={[0.45, 0.5, 1.0, 24]} />
+      {/* base plinth */}
+      <mesh position={[0, 0.04, 0]} castShadow>
+        <cylinderGeometry args={[0.5, 0.52, 0.08, 32]} />
+        <meshStandardMaterial color={PALETTE.walnutDark} roughness={0.85} />
+      </mesh>
+      {/* main barrel — slightly tapered */}
+      <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.42, 0.48, 0.92, 36]} />
         <meshStandardMaterial color={PALETTE.walnut} roughness={0.85} />
       </mesh>
-      {Array.from({ length: 12 }).map((_, i) => {
-        const a = (i / 12) * Math.PI * 2;
+      {/* vertical ribbing — a ring of darker slats forming grooves */}
+      {Array.from({ length: 28 }).map((_, i) => {
+        const a = (i / 28) * Math.PI * 2;
         return (
-          <mesh key={i} position={[Math.cos(a) * 0.51, 0.5, Math.sin(a) * 0.51]} rotation={[0, -a, 0]}>
-            <boxGeometry args={[0.02, 0.95, 0.02]} />
-            <meshStandardMaterial color={PALETTE.walnutDark} />
+          <mesh key={i} position={[Math.cos(a) * 0.46, 0.5, Math.sin(a) * 0.46]} rotation={[0, -a, 0]}>
+            <boxGeometry args={[0.02, 0.9, 0.025]} />
+            <meshStandardMaterial color={PALETTE.walnutDark} roughness={0.9} />
           </mesh>
         );
       })}
-      <mesh position={[0, 1.02, 0]}>
-        <cylinderGeometry args={[0.5, 0.5, 0.06, 24]} />
-        <meshStandardMaterial color={PALETTE.cushionCream} roughness={0.8} />
+      {/* groove highlights — tiny brighter slats between */}
+      {Array.from({ length: 28 }).map((_, i) => {
+        const a = ((i + 0.5) / 28) * Math.PI * 2;
+        return (
+          <mesh key={`hl-${i}`} position={[Math.cos(a) * 0.475, 0.5, Math.sin(a) * 0.475]} rotation={[0, -a, 0]}>
+            <boxGeometry args={[0.006, 0.85, 0.012]} />
+            <meshStandardMaterial color="#A0744E" roughness={0.7} />
+          </mesh>
+        );
+      })}
+      {/* smooth circular wooden top */}
+      <mesh position={[0, 1.0, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.5, 0.5, 0.07, 36]} />
+        <meshStandardMaterial color="#A07452" roughness={0.55} metalness={0.05} />
       </mesh>
+      {/* subtle gold trim ring on the top edge */}
+      <mesh position={[0, 1.04, 0]}>
+        <torusGeometry args={[0.495, 0.008, 8, 48]} />
+        <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.3} emissive={PALETTE.gold} emissiveIntensity={0.18} toneMapped={false} />
+      </mesh>
+      {/* wood grain hint along the top */}
+      {Array.from({ length: 4 }).map((_, i) => (
+        <mesh key={i} position={[0, 1.041, -0.3 + i * 0.18]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[0.85, 0.005]} />
+          <meshStandardMaterial color="#8B5A3C" transparent opacity={0.35} />
+        </mesh>
+      ))}
     </group>
   );
 }
 
 function MoonLamp({ position }) {
-  const ref = useRef();
+  const moonRef = useRef();
+  const haloRef = useRef();
+  const outerGlowRef = useRef();
+
+  // Crater spots scattered across the moon surface.
+  const craters = useMemo(() => {
+    const out = [];
+    const rng = mulberry32(91);
+    for (let i = 0; i < 9; i++) {
+      const theta = 0.4 + rng() * (Math.PI - 0.8);
+      const phi = rng() * Math.PI * 2;
+      const r = 0.428;
+      const cx = r * Math.sin(theta) * Math.cos(phi);
+      const cy = r * Math.cos(theta);
+      const cz = r * Math.sin(theta) * Math.sin(phi);
+      const size = 0.035 + rng() * 0.06;
+      out.push({ pos: [cx, cy, cz], size });
+    }
+    return out;
+  }, []);
+
   useFrame((s) => {
-    if (!ref.current) return;
-    ref.current.material.emissiveIntensity = 1.0 + Math.sin(s.clock.elapsedTime * 0.7) * 0.12;
+    const t = s.clock.elapsedTime;
+    if (moonRef.current) {
+      moonRef.current.material.emissiveIntensity = 1.15 + Math.sin(t * 0.7) * 0.12;
+    }
+    if (haloRef.current) {
+      haloRef.current.material.opacity = 0.13 + Math.sin(t * 0.9) * 0.04;
+    }
+    if (outerGlowRef.current) {
+      outerGlowRef.current.material.opacity = 0.07 + Math.sin(t * 1.1) * 0.03;
+    }
+  });
+
+  return (
+    <group position={position}>
+      {/* small wooden base resting on the table */}
+      <mesh position={[0, 0.04, 0]} castShadow>
+        <cylinderGeometry args={[0.16, 0.18, 0.07, 22]} />
+        <meshStandardMaterial color={PALETTE.walnutDark} roughness={0.8} />
+      </mesh>
+      {/* tiny brass ring under the moon */}
+      <mesh position={[0, 0.085, 0]}>
+        <torusGeometry args={[0.16, 0.01, 8, 24]} />
+        <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.3} />
+      </mesh>
+
+      {/* main moon sphere */}
+      <mesh ref={moonRef} position={[0, 0.5, 0]} castShadow>
+        <sphereGeometry args={[0.42, 48, 36]} />
+        <meshStandardMaterial color={PALETTE.moon} emissive={PALETTE.moon} emissiveIntensity={1.15} roughness={0.55} toneMapped={false} />
+      </mesh>
+
+      {/* subtle moon craters — slightly darker, embossed bumps */}
+      {craters.map((c, i) => (
+        <mesh key={i} position={[c.pos[0], c.pos[1] + 0.5, c.pos[2]]}>
+          <sphereGeometry args={[c.size, 14, 12]} />
+          <meshStandardMaterial color="#F0DBA8" emissive="#E8CFA0" emissiveIntensity={0.55} roughness={0.7} transparent opacity={0.85} toneMapped={false} />
+        </mesh>
+      ))}
+
+      {/* inner glow shell — hugs the surface */}
+      <mesh ref={haloRef} position={[0, 0.5, 0]}>
+        <sphereGeometry args={[0.5, 24, 18]} />
+        <meshStandardMaterial color={PALETTE.moon} transparent opacity={0.16} emissive={PALETTE.moon} emissiveIntensity={0.5} toneMapped={false} side={THREE.BackSide} />
+      </mesh>
+      {/* outer atmospheric glow */}
+      <mesh ref={outerGlowRef} position={[0, 0.5, 0]}>
+        <sphereGeometry args={[0.65, 24, 18]} />
+        <meshStandardMaterial color={PALETTE.moon} transparent opacity={0.08} emissive={PALETTE.moon} emissiveIntensity={0.35} toneMapped={false} side={THREE.BackSide} />
+      </mesh>
+
+      {/* halo billboard — soft camera-facing glow */}
+      <mesh position={[0, 0.5, 0.42]}>
+        <circleGeometry args={[0.95, 32]} />
+        <meshStandardMaterial color={PALETTE.moon} transparent opacity={0.12} emissive={PALETTE.moon} emissiveIntensity={0.5} toneMapped={false} depthWrite={false} />
+      </mesh>
+
+      {/* strong moon light — actually illuminates chaise + curtains */}
+      <pointLight position={[0, 0.5, 0]} intensity={1.55} color={PALETTE.moon} distance={7} decay={1.3} castShadow={false} />
+    </group>
+  );
+}
+
+/* ----- Items resting on the side table top ----- */
+function SideTableProps({ position }) {
+  const [tx, ty, tz] = position;
+  return (
+    <group>
+      <CeramicIncense position={[tx + 0.28, ty + 0.04, tz + 0.18]} />
+      <TinyVase position={[tx - 0.26, ty + 0.04, tz + 0.2]} />
+      <StackedBooks position={[tx + 0.22, ty + 0.04, tz - 0.25]} />
+    </group>
+  );
+}
+
+function CeramicIncense({ position }) {
+  const steamRef = useRef();
+  useFrame((s) => {
+    if (!steamRef.current) return;
+    const t = s.clock.elapsedTime;
+    steamRef.current.position.y = 0.22 + Math.sin(t * 1.2) * 0.04;
+    steamRef.current.material.opacity = 0.45 + Math.sin(t * 1.5) * 0.18;
+    steamRef.current.scale.setScalar(1 + Math.sin(t * 1.4) * 0.08);
   });
   return (
     <group position={position}>
-      <mesh position={[0, 0.04, 0]}>
-        <cylinderGeometry args={[0.18, 0.2, 0.08, 18]} />
-        <meshStandardMaterial color={PALETTE.walnutDark} />
+      {/* small ceramic dish */}
+      <mesh position={[0, 0.02, 0]} castShadow>
+        <cylinderGeometry args={[0.1, 0.09, 0.04, 20]} />
+        <meshStandardMaterial color="#E2D2EE" roughness={0.55} />
       </mesh>
-      <mesh ref={ref} position={[0, 0.5, 0]}>
-        <sphereGeometry args={[0.42, 32, 24]} />
-        <meshStandardMaterial color={PALETTE.moon} emissive={PALETTE.moon} emissiveIntensity={1.05} toneMapped={false} />
+      {/* dome diffuser body */}
+      <mesh position={[0, 0.1, 0]} castShadow>
+        <sphereGeometry args={[0.085, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
+        <meshStandardMaterial color="#F2DBC7" roughness={0.45} />
       </mesh>
-      <pointLight position={[0, 0.5, 0]} intensity={0.65} color={PALETTE.moon} distance={4.5} />
+      {/* opening rim */}
+      <mesh position={[0, 0.14, 0]}>
+        <torusGeometry args={[0.04, 0.005, 6, 18]} />
+        <meshStandardMaterial color="#C0AED0" />
+      </mesh>
+      {/* steam wisp */}
+      <mesh ref={steamRef} position={[0, 0.22, 0]}>
+        <sphereGeometry args={[0.07, 14, 12]} />
+        <meshStandardMaterial color="#E0D6F0" emissive="#E0D6F0" emissiveIntensity={0.4} transparent opacity={0.5} toneMapped={false} depthWrite={false} />
+      </mesh>
+      {/* secondary smaller wisp */}
+      <mesh position={[0.02, 0.32, -0.01]}>
+        <sphereGeometry args={[0.05, 12, 10]} />
+        <meshStandardMaterial color="#E0D6F0" transparent opacity={0.28} emissive="#E0D6F0" emissiveIntensity={0.3} toneMapped={false} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
+function TinyVase({ position }) {
+  return (
+    <group position={position}>
+      {/* small ceramic vase body */}
+      <mesh position={[0, 0.07, 0]} castShadow>
+        <cylinderGeometry args={[0.045, 0.06, 0.14, 16]} />
+        <meshStandardMaterial color={PALETTE.cushionCream} roughness={0.55} />
+      </mesh>
+      {/* vase neck rim */}
+      <mesh position={[0, 0.145, 0]}>
+        <torusGeometry args={[0.045, 0.006, 6, 16]} />
+        <meshStandardMaterial color="#D4BFA8" />
+      </mesh>
+      {/* gold rim ring */}
+      <mesh position={[0, 0.15, 0]}>
+        <torusGeometry args={[0.04, 0.004, 6, 16]} />
+        <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.3} />
+      </mesh>
+      {/* dried lavender / pampas sprigs */}
+      {[
+        { x: -0.018, z: 0.012, h: 0.28, c: '#A480C8' },
+        { x: 0.012, z: -0.014, h: 0.32, c: '#9171B0' },
+        { x: 0.022, z: 0.018, h: 0.24, c: '#B89DD4' },
+        { x: -0.01, z: -0.022, h: 0.3, c: '#A480C8' },
+      ].map((sp, i) => (
+        <group key={i} position={[sp.x, 0.16, sp.z]}>
+          <mesh position={[0, sp.h / 2, 0]}>
+            <cylinderGeometry args={[0.005, 0.005, sp.h, 6]} />
+            <meshStandardMaterial color="#3D5C3A" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, sp.h, 0]}>
+            <coneGeometry args={[0.026, 0.1, 7]} />
+            <meshStandardMaterial color={sp.c} roughness={0.85} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function StackedBooks({ position }) {
+  return (
+    <group position={position} rotation={[0, 0.18, 0]}>
+      {/* book 1 (bottom) */}
+      <RoundedBox args={[0.24, 0.05, 0.17]} radius={0.005} position={[0, 0.025, 0]} castShadow>
+        <meshStandardMaterial color="#5C3F5E" roughness={0.7} />
+      </RoundedBox>
+      {/* book 1 page edge */}
+      <mesh position={[0, 0.025, 0.087]}>
+        <planeGeometry args={[0.23, 0.045]} />
+        <meshStandardMaterial color="#FBF4EC" />
+      </mesh>
+      {/* book 2 (top, slightly rotated) */}
+      <RoundedBox args={[0.22, 0.045, 0.16]} radius={0.005} position={[0.015, 0.072, -0.005]} rotation={[0, 0.16, 0]} castShadow>
+        <meshStandardMaterial color="#A0697F" roughness={0.7} />
+      </RoundedBox>
+      {/* book 2 page edge */}
+      <mesh position={[0.015, 0.072, 0.077]} rotation={[0, 0.16, 0]}>
+        <planeGeometry args={[0.21, 0.04]} />
+        <meshStandardMaterial color="#FFFFFF" />
+      </mesh>
+      {/* gold spine bands */}
+      <mesh position={[-0.115, 0.025, 0]}>
+        <boxGeometry args={[0.005, 0.04, 0.16]} />
+        <meshStandardMaterial color={PALETTE.gold} metalness={0.7} roughness={0.4} />
+      </mesh>
+      <mesh position={[-0.106, 0.072, -0.005]} rotation={[0, 0.16, 0]}>
+        <boxGeometry args={[0.005, 0.035, 0.15]} />
+        <meshStandardMaterial color={PALETTE.gold} metalness={0.7} roughness={0.4} />
+      </mesh>
+      {/* tiny ribbon bookmark on top book */}
+      <mesh position={[0.015, 0.094, 0.07]} rotation={[0, 0.16, 0]}>
+        <boxGeometry args={[0.012, 0.005, 0.18]} />
+        <meshStandardMaterial color={PALETTE.cushionPeach} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ----- Hanging Moroccan-style pendant lantern ----- */
+function HangingLantern({ position }) {
+  const glowRef = useRef();
+  const swayRef = useRef();
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    if (glowRef.current) {
+      glowRef.current.material.emissiveIntensity = 1.0 + Math.sin(t * 1.4) * 0.22;
+    }
+    if (swayRef.current) {
+      swayRef.current.rotation.z = Math.sin(t * 0.6) * 0.018;
+    }
+  });
+  const yLantern = 2.85;
+  const yTop = 5.6;
+  const chainLen = yTop - yLantern;
+  return (
+    <group position={position}>
+      {/* small ceiling cap */}
+      <mesh position={[0, yTop, 0]}>
+        <cylinderGeometry args={[0.06, 0.08, 0.06, 14]} />
+        <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.35} />
+      </mesh>
+      {/* sway pivot */}
+      <group ref={swayRef} position={[0, yTop, 0]}>
+        {/* hanging cord */}
+        <mesh position={[0, -chainLen / 2, 0]}>
+          <cylinderGeometry args={[0.01, 0.01, chainLen, 6]} />
+          <meshStandardMaterial color={PALETTE.walnutDark} />
+        </mesh>
+        {/* chain ring accents */}
+        {[0.2, 0.5, 0.8].map((tt, i) => (
+          <mesh key={i} position={[0, -chainLen * tt, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.024, 0.005, 6, 14]} />
+            <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.4} />
+          </mesh>
+        ))}
+        {/* lantern top cap (cone) */}
+        <mesh position={[0, -chainLen + 0.36, 0]}>
+          <coneGeometry args={[0.18, 0.18, 12]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.35} />
+        </mesh>
+        {/* lantern body — perforated metal ball with internal glow */}
+        <mesh ref={glowRef} position={[0, -chainLen, 0]}>
+          <sphereGeometry args={[0.26, 24, 18]} />
+          <meshStandardMaterial color="#3F2A30" emissive={PALETTE.amber} emissiveIntensity={1.15} toneMapped={false} />
+        </mesh>
+        {/* vertical metal ribs (8 around the ball) */}
+        {Array.from({ length: 8 }).map((_, i) => {
+          const a = (i / 8) * Math.PI * 2;
+          return (
+            <mesh key={i} position={[Math.cos(a) * 0.262, -chainLen, Math.sin(a) * 0.262]} rotation={[0, -a, 0]}>
+              <boxGeometry args={[0.014, 0.4, 0.014]} />
+              <meshStandardMaterial color="#2F1F25" metalness={0.4} roughness={0.6} />
+            </mesh>
+          );
+        })}
+        {/* horizontal ribs */}
+        {[-0.16, 0, 0.16].map((y, i) => (
+          <mesh key={i} position={[0, -chainLen + y, 0]}>
+            <torusGeometry args={[0.265, 0.012, 6, 28]} />
+            <meshStandardMaterial color="#2F1F25" metalness={0.4} roughness={0.6} />
+          </mesh>
+        ))}
+        {/* tiny ornamental cutouts (small bright dots glowing through the metal) */}
+        {Array.from({ length: 14 }).map((_, i) => {
+          const a = (i / 14) * Math.PI * 2;
+          const yo = (i % 2 === 0 ? -0.07 : 0.07);
+          return (
+            <mesh key={`p${i}`} position={[Math.cos(a) * 0.272, -chainLen + yo, Math.sin(a) * 0.272]}>
+              <sphereGeometry args={[0.018, 8, 6]} />
+              <meshStandardMaterial color={PALETTE.amber} emissive={PALETTE.amber} emissiveIntensity={1.2} toneMapped={false} />
+            </mesh>
+          );
+        })}
+        {/* bottom finial */}
+        <mesh position={[0, -chainLen - 0.36, 0]}>
+          <coneGeometry args={[0.045, 0.12, 10]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.35} />
+        </mesh>
+        {/* warm point light */}
+        <pointLight position={[0, -chainLen, 0]} intensity={0.95} color={PALETTE.amber} distance={5} decay={1.4} />
+      </group>
     </group>
   );
 }
