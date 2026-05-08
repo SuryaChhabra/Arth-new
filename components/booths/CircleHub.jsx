@@ -12,7 +12,7 @@ export default function CircleHub() {
   const joinedCircles = useArthStore((s) => s.joinedCircles);
   const joinCircle = useArthStore((s) => s.joinCircle);
   return (
-    <group position={b.room.position} rotation={[0, b.room.rotation, 0]}>
+    <group>
       <BoothShell {...b} />
 
       <pointLight position={[0, 5, 1]} intensity={1.4} color="#FFD7A8" distance={20} />

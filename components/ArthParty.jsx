@@ -2,11 +2,10 @@
 
 import { Suspense, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Environment, Preload } from '@react-three/drei';
+import { Environment, ContactShadows } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
-import Avatar from './Avatar';
 import CameraRig from './CameraRig';
 import Plaza from './Plaza';
 import SoJaoLounge from './booths/SoJaoLounge';
@@ -21,80 +20,104 @@ import HUD from './ui/HUD';
 import HotspotModal from './ui/HotspotModal';
 import BodyDecoder from './ui/BodyDecoder';
 import BoothEntryToast from './ui/BoothEntryToast';
+import BottomInfoBar from './ui/BottomInfoBar';
 
 import { useArthStore } from '@/lib/store';
 import { BOOTHS } from '@/lib/booths';
 
+const SCENES = {
+  null: Plaza,
+  sojao: SoJaoLounge,
+  iron: IronEnergyBar,
+  brainfog: BrainFogBooth,
+  hotflash: HotFlashChillRoom,
+  normalized: NormalizedWall,
+  hub: CircleHub,
+};
+
 export default function ArthParty() {
   const activeBooth = useArthStore((s) => s.activeBooth);
-  const overlayColor = useMemo(() => {
-    if (!activeBooth) return '#1a0f1c';
-    return BOOTHS[activeBooth].palette.base;
+  const Scene = SCENES[activeBooth] || Plaza;
+
+  const bgGradient = useMemo(() => {
+    if (!activeBooth) {
+      return 'radial-gradient(circle at 50% 60%, #FBE2C2 0%, #F3A6B0 38%, #5B3A55 78%, #1a0f1c 100%)';
+    }
+    const p = BOOTHS[activeBooth].palette;
+    return `radial-gradient(circle at 50% 55%, ${p.glow}cc 0%, ${p.base} 65%, #2a1828 100%)`;
   }, [activeBooth]);
 
   return (
     <main className="relative h-screen w-screen overflow-hidden select-none">
-      {/* Ambient background gradient that shifts with active booth */}
+      {/* Ambient background gradient */}
       <motion.div
         className="absolute inset-0 -z-10"
-        animate={{
-          background: activeBooth
-            ? `radial-gradient(circle at 50% 60%, ${BOOTHS[activeBooth].palette.glow}cc 0%, ${BOOTHS[activeBooth].palette.base} 70%, #1a0f1c 100%)`
-            : 'radial-gradient(circle at 50% 65%, #FBE2C2 0%, #F3A6B0 35%, #5B3A55 80%, #1a0f1c 100%)',
-        }}
-        transition={{ duration: 1.4 }}
+        animate={{ background: bgGradient }}
+        transition={{ duration: 1.1 }}
       />
 
       <Canvas
         shadows
         dpr={[1, 1.6]}
-        camera={{ position: [0, 9, 18], fov: 45, near: 0.1, far: 200 }}
+        camera={{ position: [0, 5.6, 15.5], fov: 42, near: 0.1, far: 120 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
       >
         <Suspense fallback={null}>
           <SceneLights activeBooth={activeBooth} />
-          <fog attach="fog" args={[activeBooth ? BOOTHS[activeBooth].palette.base : '#3b2540', 35, 95]} />
 
-          <Plaza />
-          <SoJaoLounge />
-          <IronEnergyBar />
-          <BrainFogBooth />
-          <HotFlashChillRoom />
-          <NormalizedWall />
-          <CircleHub />
+          {/* AnimatePresence for scene swap */}
+          <SceneFader sceneKey={activeBooth || 'lobby'}>
+            <Scene />
+          </SceneFader>
 
-          <Avatar />
+          <ContactShadows
+            position={[0, 0.005, 0]}
+            opacity={0.45}
+            scale={20}
+            blur={2.4}
+            far={6}
+            color="#3a1f33"
+          />
+
           <CameraRig />
-          <Preload all />
         </Suspense>
       </Canvas>
 
-      {/* Booth-entry color flash */}
-      <BoothEntryFlash />
-
       {/* UI overlays */}
+      <BoothEntryFlash />
       <IntroOverlay />
       <HUD />
       <BoothEntryToast />
+      <BottomInfoBar />
       <HotspotModal />
       <BodyDecoder />
     </main>
   );
 }
 
+function SceneFader({ sceneKey, children }) {
+  // Simple swap on key change. Could be expanded into proper fade.
+  return <group key={sceneKey}>{children}</group>;
+}
+
 function SceneLights({ activeBooth }) {
+  const palette = activeBooth ? BOOTHS[activeBooth].palette : null;
   return (
     <>
-      <ambientLight intensity={activeBooth ? 0.55 : 0.7} />
-      <hemisphereLight intensity={0.45} color="#FBE2C2" groundColor="#5B3A55" />
+      <ambientLight intensity={0.55} />
+      <hemisphereLight intensity={0.4} color="#FBE2C2" groundColor="#5B3A55" />
       <directionalLight
-        position={[10, 18, 10]}
-        intensity={activeBooth ? 0.5 : 1.0}
+        position={[6, 14, 8]}
+        intensity={0.95}
         castShadow
         shadow-mapSize={[1024, 1024]}
+        shadow-camera-left={-12}
+        shadow-camera-right={12}
+        shadow-camera-top={12}
+        shadow-camera-bottom={-12}
       />
-      <directionalLight position={[-12, 14, -8]} intensity={0.35} color="#F3A6B0" />
-      <Environment preset={activeBooth ? 'sunset' : 'city'} />
+      <directionalLight position={[-8, 10, -4]} intensity={0.4} color={palette ? palette.accent : '#F3A6B0'} />
+      <Environment preset="apartment" />
     </>
   );
 }
@@ -106,13 +129,13 @@ function BoothEntryFlash() {
       {activeBooth && (
         <motion.div
           key={activeBooth + '_flash'}
-          initial={{ opacity: 0.6 }}
+          initial={{ opacity: 0.55 }}
           animate={{ opacity: 0 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.9 }}
+          transition={{ duration: 0.7 }}
           className="absolute inset-0 z-30 pointer-events-none"
           style={{
-            background: `radial-gradient(circle at 50% 50%, ${BOOTHS[activeBooth].palette.glow}aa 0%, transparent 70%)`,
+            background: `radial-gradient(circle at 50% 50%, ${BOOTHS[activeBooth].palette.glow}99 0%, transparent 70%)`,
           }}
         />
       )}

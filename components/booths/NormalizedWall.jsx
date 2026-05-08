@@ -10,7 +10,7 @@ import { BOOTHS } from '@/lib/booths';
 export default function NormalizedWall() {
   const b = BOOTHS.normalized;
   return (
-    <group position={b.room.position} rotation={[0, b.room.rotation, 0]}>
+    <group>
       <BoothShell {...b} />
 
       <pointLight position={[0, 5, 1]} intensity={1.4} color="#F3A6B0" distance={20} />

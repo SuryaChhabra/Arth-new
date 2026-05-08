@@ -3,9 +3,18 @@
 import { useMemo, useRef, useState } from 'react';
 import { Text, RoundedBox } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { BOOTHS, BOOTH_ORDER, PLAZA_QUOTES } from '@/lib/booths';
+import * as THREE from 'three';
+import { BOOTHS, BOOTH_ORDER } from '@/lib/booths';
 import { useArthStore } from '@/lib/store';
-import { ArchwayDoor, FloatingQuote, Sparkles, StringLights } from './world/Decor';
+import Guide from './Guide';
+
+const PORTAL_LAYOUT = [
+  { id: 'sojao',     x: -7.0, z:  2.2, ry:  0.34 },
+  { id: 'iron',      x: -3.6, z:  0.6, ry:  0.18 },
+  { id: 'brainfog',  x:  0,   z:  0.0, ry:  0 },
+  { id: 'hotflash',  x:  3.6, z:  0.6, ry: -0.18 },
+  { id: 'normalized',x:  7.0, z:  2.2, ry: -0.34 },
+];
 
 export default function Plaza() {
   const setActiveBooth = useArthStore((s) => s.setActiveBooth);
@@ -14,151 +23,148 @@ export default function Plaza() {
 
   return (
     <group>
-      {/* Floor — large rounded medallion */}
-      <PlazaFloor />
+      {/* Lobby lights */}
+      <ambientLight intensity={0.55} />
+      <pointLight position={[0, 7, 4]} intensity={1.4} color="#FFD7A8" distance={28} />
+      <pointLight position={[-7, 5, 4]} intensity={0.9} color="#F3A6B0" distance={20} />
+      <pointLight position={[7, 5, 4]} intensity={0.9} color="#F3A6B0" distance={20} />
+      <pointLight position={[0, 4, -6]} intensity={1.0} color="#FFB36B" distance={18} />
 
-      {/* Sky dome accent ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-        <ringGeometry args={[36, 38, 64]} />
-        <meshStandardMaterial color="#F08A5D" transparent opacity={0.35} />
-      </mesh>
+      <LobbyShell />
+      <HeroBackdrop />
+      <CentralInstallation position={[0, 0.05, -3.4]} />
 
-      {/* Hero arch sign */}
-      <HeroArch />
+      {/* Welcome desk + guide */}
+      <WelcomeDesk position={[-7, 0, 5.3]} rotation={0.55} />
+      <Guide position={[-6.4, 0, 4.1]} rotation={0.55} scale={1.15} wave />
+      <DeskAttendantSign position={[-7, 1.85, 5.3]} rotation={0.55} />
 
-      {/* Central installation */}
-      <CentralInstallation />
-
-      {/* Body Decoder kiosk */}
-      <BodyDecoderKiosk onOpen={() => setDecoderOpen(true)} highlight={!!recommendation} />
-
-      {/* Booth doorways arranged around plaza */}
-      {BOOTH_ORDER.map((id) => {
-        const b = BOOTHS[id];
+      {/* Portal arches arranged in an arc, plus circle hub portal in front */}
+      {PORTAL_LAYOUT.map((slot) => {
+        const b = BOOTHS[slot.id];
         return (
-          <ArchwayDoor
-            key={id}
-            position={b.door.position}
-            rotation={b.door.rotation}
-            color={b.palette.accent}
-            label={b.door.label}
-            sub={b.door.sub}
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveBooth(id);
-            }}
-            hover={recommendation === id}
+          <PortalArch
+            key={slot.id}
+            position={[slot.x, 0, slot.z]}
+            rotation={slot.ry}
+            booth={b}
+            onClick={() => setActiveBooth(slot.id)}
+            recommended={recommendation === slot.id}
           />
         );
       })}
+      {/* Hub portal — front center, the gentle final destination */}
+      <HubPortal
+        position={[0, 0, 5.5]}
+        booth={BOOTHS.hub}
+        onClick={() => setActiveBooth('hub')}
+        recommended={recommendation === 'hub'}
+      />
 
-      {/* String lights criss-crossing the plaza */}
-      <StringLights from={[-22, 7, -10]} to={[22, 7, -10]} count={16} />
-      <StringLights from={[-22, 7, 10]} to={[22, 7, 10]} count={16} color="#F3A6B0" />
-      <StringLights from={[-22, 7, -10]} to={[22, 7, 10]} count={14} color="#FFD7A8" />
-      <StringLights from={[22, 7, -10]} to={[-22, 7, 10]} count={14} color="#C9B8E0" />
+      {/* Hanging string lights */}
+      <CeilingLights />
+      <Garland />
 
-      {/* Floating community quotes around the plaza */}
-      {PLAZA_QUOTES.map((q, i) => {
-        const a = (i / PLAZA_QUOTES.length) * Math.PI * 2;
-        const r = 17;
-        return (
-          <FloatingQuote
-            key={i}
-            text={q}
-            position={[Math.cos(a) * r, 3.3 + (i % 2) * 0.8, Math.sin(a) * r]}
-            color={i % 2 === 0 ? '#5B3A55' : '#F08A5D'}
-          />
-        );
-      })}
+      {/* Ground rug medallion */}
+      <FloorMedallion />
 
-      {/* Decorative people clusters */}
-      <PeopleCluster position={[10, 0, 6]} />
-      <PeopleCluster position={[-12, 0, 4]} flip />
-      <PeopleCluster position={[6, 0, -8]} />
+      {/* Planters left + right of camera */}
+      <Planter position={[-9.2, 0, 6]} color="#5B3A55" />
+      <Planter position={[9.2, 0, 6]} color="#5B3A55" />
+      <Planter position={[-9.2, 0, -2]} color="#3A2750" tall />
+      <Planter position={[9.2, 0, -2]} color="#3A2750" tall />
 
-      {/* Pink-petal sparkles */}
-      <Sparkles count={70} radius={32} color="#F3A6B0" y={[2, 8]} />
+      {/* Ribbon banners with quotes */}
+      <RibbonQuote position={[-6.8, 5.8, -1]} text="Same, sis." color="#F08A5D" />
+      <RibbonQuote position={[6.8, 5.8, -1]} text="You’re not alone." color="#F3A6B0" />
+      <RibbonQuote position={[-3.5, 6.4, -3.2]} text="I thought it was just me." color="#C9B8E0" />
+      <RibbonQuote position={[3.5, 6.4, -3.2]} text="Sending this to mom." color="#FFD7A8" />
+
+      {/* Body Decoder kiosk on right */}
+      <BodyDecoderKiosk position={[7.6, 0, 5.3]} rotation={-0.55} onOpen={() => setDecoderOpen(true)} />
+
+      {/* Soft floor cushions and side props */}
+      <FloorCushion position={[-3, 0, 5]} color="#F3A6B0" />
+      <FloorCushion position={[3, 0, 5]} color="#FFD7A8" />
     </group>
   );
 }
 
-function PlazaFloor() {
+/* ---------------- Lobby shell ---------------- */
+
+function LobbyShell() {
+  // A wide curved back wall + side wing walls, all in cream/peach.
   return (
     <group>
-      {/* Outer ground ring */}
+      {/* main floor (large oval) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[80, 64]} />
-        <meshStandardMaterial color="#F3DCC4" />
+        <circleGeometry args={[14, 64]} />
+        <meshStandardMaterial color="#F4E0CC" roughness={0.95} />
       </mesh>
-      {/* Plaza medallion */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
-        <circleGeometry args={[18, 64]} />
-        <meshStandardMaterial color="#FBE2C2" />
+
+      {/* curved back wall */}
+      <mesh position={[0, 4.5, -7]}>
+        <cylinderGeometry args={[12, 12, 9, 64, 1, true, -Math.PI * 0.42, Math.PI * 0.84]} />
+        <meshStandardMaterial color="#FBE2C2" side={THREE.DoubleSide} roughness={0.92} />
       </mesh>
-      {/* Inner medallion ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
-        <ringGeometry args={[10.6, 11.2, 64]} />
+
+      {/* warm wash on the wall */}
+      <mesh position={[0, 4.5, -6.99]}>
+        <cylinderGeometry args={[11.96, 11.96, 9, 64, 1, true, -Math.PI * 0.32, Math.PI * 0.64]} />
+        <meshStandardMaterial color="#FFD7BD" side={THREE.DoubleSide} transparent opacity={0.55} roughness={0.9} />
+      </mesh>
+
+      {/* skirting boards */}
+      <mesh position={[0, 0.18, -6.99]}>
+        <torusGeometry args={[12, 0.08, 8, 64, Math.PI * 0.84]} />
         <meshStandardMaterial color="#F08A5D" />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.013, 0]}>
-        <ringGeometry args={[7.8, 8.1, 64]} />
-        <meshStandardMaterial color="#F3A6B0" />
+
+      {/* ceiling band */}
+      <mesh position={[0, 9, -6.99]}>
+        <torusGeometry args={[12, 0.08, 8, 64, Math.PI * 0.84]} />
+        <meshStandardMaterial color="#F08A5D" />
       </mesh>
-      {/* Floor radial dashes */}
-      {Array.from({ length: 24 }).map((_, i) => {
-        const a = (i / 24) * Math.PI * 2;
-        return (
-          <mesh
-            key={i}
-            position={[Math.cos(a) * 14, 0.014, Math.sin(a) * 14]}
-            rotation={[-Math.PI / 2, 0, -a]}
-          >
-            <planeGeometry args={[1.4, 0.18]} />
-            <meshStandardMaterial color="#F08A5D" />
-          </mesh>
-        );
-      })}
+
+      {/* front floor border */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <ringGeometry args={[13.6, 14, 64]} />
+        <meshStandardMaterial color="#F08A5D" />
+      </mesh>
     </group>
   );
 }
 
-function HeroArch() {
-  const ref = useRef();
-  useFrame((s) => {
-    if (ref.current) ref.current.material.emissiveIntensity = 0.6 + Math.sin(s.clock.elapsedTime * 1.3) * 0.18;
-  });
+function HeroBackdrop() {
+  // Big arched ARTH PARTY signage embedded in the back wall.
   return (
-    <group position={[0, 0, -10]}>
-      <mesh position={[-7, 4, 0]}>
-        <boxGeometry args={[0.5, 8, 0.5]} />
+    <group position={[0, 6.4, -6.85]}>
+      {/* big arch frame */}
+      <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[5.2, 0.22, 16, 48, Math.PI]} />
         <meshStandardMaterial color="#F08A5D" />
       </mesh>
-      <mesh position={[7, 4, 0]}>
-        <boxGeometry args={[0.5, 8, 0.5]} />
+      <mesh position={[-5.2, -1.4, 0]}>
+        <boxGeometry args={[0.32, 2.8, 0.32]} />
         <meshStandardMaterial color="#F08A5D" />
       </mesh>
-      <mesh position={[0, 8.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[7, 0.5, 14, 32, Math.PI]} />
+      <mesh position={[5.2, -1.4, 0]}>
+        <boxGeometry args={[0.32, 2.8, 0.32]} />
         <meshStandardMaterial color="#F08A5D" />
       </mesh>
-      <mesh ref={ref} position={[0, 8.05, 0.05]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[7, 0.62, 14, 32, Math.PI]} />
-        <meshStandardMaterial color="#F08A5D" emissive="#F08A5D" emissiveIntensity={0.7} transparent opacity={0.4} toneMapped={false} />
-      </mesh>
-      {/* Banner */}
-      <group position={[0, 6, 0.32]}>
+      {/* main banner */}
+      <group position={[0, -0.6, 0.05]}>
         <mesh>
-          <planeGeometry args={[12, 3.4]} />
+          <planeGeometry args={[10, 2.4]} />
           <meshStandardMaterial color="#FBF4EC" />
         </mesh>
-        <Text position={[0, 0.55, 0.02]} fontSize={1.5} color="#2A1E2C" anchorX="center" anchorY="middle" letterSpacing={-0.04}>
+        <Text position={[0, 0.45, 0.02]} fontSize={1.35} color="#2A1E2C" anchorX="center" anchorY="middle" letterSpacing={-0.04}>
           ARTH PARTY
         </Text>
-        <Text position={[0, -0.55, 0.02]} fontSize={0.32} color="#5B3A55" anchorX="center" anchorY="middle" maxWidth={10}>
+        <Text position={[0, -0.45, 0.02]} fontSize={0.28} color="#5B3A55" anchorX="center" anchorY="middle" maxWidth={9}>
           Women’s health, but make it a vibe.
         </Text>
-        <Text position={[0, -0.95, 0.02]} fontSize={0.22} color="#F08A5D" anchorX="center" anchorY="middle">
+        <Text position={[0, -0.85, 0.02]} fontSize={0.18} color="#F08A5D" anchorX="center" anchorY="middle">
           by Arth · Emcure
         </Text>
       </group>
@@ -166,71 +172,284 @@ function HeroArch() {
   );
 }
 
-function CentralInstallation() {
-  const ref = useRef();
-  const ringRef = useRef();
-  useFrame((state) => {
-    if (ref.current) ref.current.rotation.y = state.clock.elapsedTime * 0.1;
-    if (ringRef.current) ringRef.current.rotation.y = -state.clock.elapsedTime * 0.05;
+function CentralInstallation({ position }) {
+  const ringA = useRef();
+  const ringB = useRef();
+  const ringC = useRef();
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    if (ringA.current) ringA.current.rotation.z = t * 0.18;
+    if (ringB.current) ringB.current.rotation.y = -t * 0.15;
+    if (ringC.current) ringC.current.rotation.x = t * 0.12;
   });
   return (
-    <group position={[0, 0, 0]}>
+    <group position={position}>
       {/* base medallion */}
-      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[2.2, 4.6, 48]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <circleGeometry args={[2.2, 48]} />
+        <meshStandardMaterial color="#F3A6B0" />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <ringGeometry args={[1.7, 1.85, 48]} />
         <meshStandardMaterial color="#F08A5D" />
       </mesh>
-      {/* glowing pillar */}
-      <mesh position={[0, 1.2, 0]}>
-        <cylinderGeometry args={[0.6, 0.8, 2.4, 24]} />
+      {/* glow plinth */}
+      <mesh position={[0, 0.5, 0]}>
+        <cylinderGeometry args={[0.5, 0.65, 1, 24]} />
         <meshStandardMaterial color="#FBF4EC" />
       </mesh>
-      {/* hovering text ring */}
-      <group ref={ref} position={[0, 3.6, 0]}>
-        {Array.from({ length: 1 }).map((_, i) => (
-          <Text
-            key={i}
-            position={[0, 0, 0]}
-            fontSize={0.6}
-            color="#F08A5D"
-            anchorX="center"
-            anchorY="middle"
-            maxWidth={6}
-            textAlign="center"
-            outlineWidth={0.012}
-            outlineColor="#FBF4EC"
-          >
-            {`Your body is not\nbeing dramatic.`}
-          </Text>
-        ))}
+      {/* hovering glow orb */}
+      <mesh position={[0, 1.95, 0]}>
+        <sphereGeometry args={[0.55, 32, 24]} />
+        <meshStandardMaterial color="#F3A6B0" emissive="#F3A6B0" emissiveIntensity={0.7} toneMapped={false} />
+      </mesh>
+      {/* orbiting glow rings */}
+      <mesh ref={ringA} position={[0, 1.95, 0]}>
+        <torusGeometry args={[1, 0.04, 12, 64]} />
+        <meshStandardMaterial color="#F08A5D" emissive="#F08A5D" emissiveIntensity={1.1} toneMapped={false} />
+      </mesh>
+      <mesh ref={ringB} position={[0, 1.95, 0]}>
+        <torusGeometry args={[1.15, 0.035, 12, 64]} />
+        <meshStandardMaterial color="#C9B8E0" emissive="#C9B8E0" emissiveIntensity={1.0} toneMapped={false} />
+      </mesh>
+      <mesh ref={ringC} position={[0, 1.95, 0]}>
+        <torusGeometry args={[1.32, 0.03, 12, 64]} />
+        <meshStandardMaterial color="#FBE2C2" emissive="#FFD7A8" emissiveIntensity={0.9} toneMapped={false} />
+      </mesh>
+      {/* hovering text card */}
+      <group position={[0, 3.2, 0.05]}>
+        <mesh>
+          <planeGeometry args={[4.4, 1.2]} />
+          <meshStandardMaterial color="#FBF4EC" />
+        </mesh>
+        <Text position={[0, 0.05, 0.02]} fontSize={0.34} color="#F08A5D" anchorX="center" anchorY="middle" maxWidth={4} textAlign="center" letterSpacing={-0.02}>
+          Your body is not being dramatic.
+        </Text>
       </group>
-      {/* glow ring */}
-      <mesh ref={ringRef} position={[0, 3.6, 0]} rotation={[Math.PI / 2.5, 0, 0]}>
-        <torusGeometry args={[2.2, 0.05, 12, 60]} />
-        <meshStandardMaterial color="#F3A6B0" emissive="#F3A6B0" emissiveIntensity={1.2} toneMapped={false} />
+    </group>
+  );
+}
+
+/* ---------------- Portals ---------------- */
+
+function PortalArch({ position, rotation, booth, onClick, recommended }) {
+  const [hover, setHover] = useState(false);
+  const glowRef = useRef();
+  useFrame((s) => {
+    if (!glowRef.current) return;
+    const t = s.clock.elapsedTime;
+    glowRef.current.material.emissiveIntensity =
+      (hover || recommended ? 1.4 : 0.7) + Math.sin(t * 1.6) * 0.18;
+  });
+  const accent = booth.palette.accent;
+  return (
+    <group
+      position={position}
+      rotation={[0, rotation, 0]}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setHover(true);
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        setHover(false);
+        document.body.style.cursor = 'default';
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      {/* stage base */}
+      <mesh position={[0, 0.06, 0]}>
+        <cylinderGeometry args={[1.55, 1.7, 0.12, 32]} />
+        <meshStandardMaterial color="#FBE2C2" />
       </mesh>
-      <mesh position={[0, 3.6, 0]} rotation={[Math.PI / 1.6, 0.6, 0]}>
-        <torusGeometry args={[2.5, 0.04, 12, 60]} />
-        <meshStandardMaterial color="#C9B8E0" emissive="#C9B8E0" emissiveIntensity={1} toneMapped={false} />
+      <mesh ref={glowRef} position={[0, 0.13, 0]}>
+        <ringGeometry args={[1.35, 1.55, 32]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.9} toneMapped={false} />
       </mesh>
-      <mesh position={[0, 3.6, 0]} rotation={[Math.PI / 1.2, -0.4, 0]}>
-        <torusGeometry args={[2.8, 0.04, 12, 60]} />
-        <meshStandardMaterial color="#F08A5D" emissive="#F08A5D" emissiveIntensity={1} toneMapped={false} />
+      {/* arch frame */}
+      <mesh position={[-1.1, 1.4, 0]}>
+        <boxGeometry args={[0.22, 2.8, 0.4]} />
+        <meshStandardMaterial color={accent} />
+      </mesh>
+      <mesh position={[1.1, 1.4, 0]}>
+        <boxGeometry args={[0.22, 2.8, 0.4]} />
+        <meshStandardMaterial color={accent} />
+      </mesh>
+      <mesh position={[0, 2.85, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.1, 0.2, 14, 32, Math.PI]} />
+        <meshStandardMaterial color={accent} />
+      </mesh>
+      {/* fabric drape inside portal — colored by booth palette */}
+      <mesh position={[0, 1.4, 0.02]}>
+        <planeGeometry args={[1.95, 2.6]} />
+        <meshStandardMaterial color={booth.palette.glow} transparent opacity={0.6} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, 1.4, -0.02]}>
+        <planeGeometry args={[1.85, 2.5]} />
+        <meshStandardMaterial color={booth.palette.base} side={THREE.DoubleSide} />
+      </mesh>
+      {/* booth icon hovering */}
+      <BoothIcon booth={booth} position={[0, 1.7, 0.05]} />
+
+      {/* Title plaque */}
+      <group position={[0, 3.4, 0]}>
+        <mesh>
+          <planeGeometry args={[2.6, 0.85]} />
+          <meshStandardMaterial color="#FBF4EC" />
+        </mesh>
+        <Text position={[0, 0.15, 0.02]} fontSize={0.2} color={accent} anchorX="center" anchorY="middle" maxWidth={2.4} textAlign="center" letterSpacing={-0.01}>
+          {booth.title}
+        </Text>
+        <Text position={[0, -0.18, 0.02]} fontSize={0.1} color="#5B3A55" anchorX="center" anchorY="middle" maxWidth={2.4}>
+          {booth.door.sub}
+        </Text>
+      </group>
+
+      {/* hover glow puff */}
+      {(hover || recommended) && (
+        <mesh position={[0, 1.6, -0.5]}>
+          <sphereGeometry args={[1.6, 24, 16]} />
+          <meshStandardMaterial color={accent} transparent opacity={0.18} emissive={accent} emissiveIntensity={0.8} toneMapped={false} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+function HubPortal({ position, booth, onClick, recommended }) {
+  const [hover, setHover] = useState(false);
+  const ref = useRef();
+  useFrame((s) => {
+    if (!ref.current) return;
+    ref.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.06;
+  });
+  return (
+    <group
+      ref={ref}
+      position={position}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setHover(true);
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        setHover(false);
+        document.body.style.cursor = 'default';
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      <RoundedBox args={[3.4, 0.4, 1.8]} radius={0.12} position={[0, 0.2, 0]}>
+        <meshStandardMaterial color="#FBE2C2" />
+      </RoundedBox>
+      <RoundedBox args={[3.1, 0.06, 1.5]} radius={0.08} position={[0, 0.43, 0]}>
+        <meshStandardMaterial color={hover || recommended ? '#F08A5D' : '#F3A6B0'} emissive="#F3A6B0" emissiveIntensity={0.4} toneMapped={false} />
+      </RoundedBox>
+      <Text position={[0, 0.5, 0]} rotation={[-Math.PI / 2, 0, 0]} fontSize={0.28} color="#5B3A55" anchorX="center" anchorY="middle">
+        Find your circle →
+      </Text>
+      <Text position={[0, 0.51, 0.4]} rotation={[-Math.PI / 2, 0, 0]} fontSize={0.13} color="#F08A5D" anchorX="center" anchorY="middle">
+        Circle Hub · Community Café
+      </Text>
+    </group>
+  );
+}
+
+function BoothIcon({ booth, position }) {
+  const map = {
+    sojao: '🌙',
+    iron: '⚡',
+    brainfog: '🧠',
+    hotflash: '🌬️',
+    normalized: '📌',
+    hub: '💗',
+  };
+  return (
+    <Text position={position} fontSize={0.7} anchorX="center" anchorY="middle">
+      {map[booth.id] || '✨'}
+    </Text>
+  );
+}
+
+/* ---------------- Welcome desk + decoder ---------------- */
+
+function WelcomeDesk({ position, rotation }) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      <RoundedBox args={[2.6, 1.05, 0.9]} radius={0.1} position={[0, 0.55, 0]}>
+        <meshStandardMaterial color="#F08A5D" />
+      </RoundedBox>
+      <RoundedBox args={[2.8, 0.08, 1.1]} radius={0.08} position={[0, 1.1, 0]}>
+        <meshStandardMaterial color="#FBE2C2" />
+      </RoundedBox>
+      {/* lamp */}
+      <mesh position={[-1, 1.5, 0]}>
+        <cylinderGeometry args={[0.06, 0.06, 0.7, 12]} />
+        <meshStandardMaterial color="#5B3A55" />
+      </mesh>
+      <mesh position={[-1, 1.95, 0]}>
+        <coneGeometry args={[0.22, 0.32, 18]} />
+        <meshStandardMaterial color="#FFD7A8" emissive="#FFD7A8" emissiveIntensity={0.6} toneMapped={false} />
+      </mesh>
+      {/* iPad */}
+      <mesh position={[0.6, 1.16, 0]} rotation={[-0.4, 0, 0]}>
+        <boxGeometry args={[0.7, 0.04, 0.5]} />
+        <meshStandardMaterial color="#2A1E2C" />
+      </mesh>
+      <mesh position={[0.6, 1.18, 0]} rotation={[-0.4, 0, 0]}>
+        <planeGeometry args={[0.6, 0.42]} />
+        <meshStandardMaterial color="#F3A6B0" emissive="#F3A6B0" emissiveIntensity={0.4} toneMapped={false} />
+      </mesh>
+      {/* small flowers */}
+      <mesh position={[0.9, 1.25, 0.35]}>
+        <cylinderGeometry args={[0.07, 0.09, 0.24, 14]} />
+        <meshStandardMaterial color="#FBF4EC" />
+      </mesh>
+      <mesh position={[0.9, 1.45, 0.35]}>
+        <sphereGeometry args={[0.08, 12, 10]} />
+        <meshStandardMaterial color="#F3A6B0" />
+      </mesh>
+      <mesh position={[0.85, 1.45, 0.4]}>
+        <sphereGeometry args={[0.07, 12, 10]} />
+        <meshStandardMaterial color="#FFD7A8" />
       </mesh>
     </group>
   );
 }
 
-function BodyDecoderKiosk({ onOpen, highlight }) {
+function DeskAttendantSign({ position, rotation }) {
+  return (
+    <group position={[position[0], position[1], position[2]]} rotation={[0, rotation, 0]}>
+      <mesh position={[0, 1.4, 0.45]}>
+        <planeGeometry args={[2, 0.7]} />
+        <meshStandardMaterial color="#FBF4EC" />
+      </mesh>
+      <Text position={[0, 1.55, 0.46]} fontSize={0.16} color="#F08A5D" anchorX="center" anchorY="middle">
+        Welcome to Arth Party
+      </Text>
+      <Text position={[0, 1.32, 0.46]} fontSize={0.1} color="#5B3A55" anchorX="center" anchorY="middle" maxWidth={1.85} textAlign="center">
+        Hi, I’m Maya — pick any room to start.
+      </Text>
+    </group>
+  );
+}
+
+function BodyDecoderKiosk({ position, rotation, onOpen }) {
   const [hover, setHover] = useState(false);
   const screenRef = useRef();
-  useFrame((state) => {
+  useFrame((s) => {
     if (!screenRef.current) return;
-    screenRef.current.material.emissiveIntensity = 0.7 + Math.sin(state.clock.elapsedTime * 1.4) * 0.25;
+    screenRef.current.material.emissiveIntensity = 0.6 + Math.sin(s.clock.elapsedTime * 1.3) * 0.25;
   });
   return (
     <group
-      position={[10, 0, 6]}
+      position={position}
+      rotation={[0, rotation, 0]}
       onPointerOver={() => {
         setHover(true);
         document.body.style.cursor = 'pointer';
@@ -244,75 +463,202 @@ function BodyDecoderKiosk({ onOpen, highlight }) {
         onOpen();
       }}
     >
-      <mesh position={[0, 0.4, 0]}>
-        <boxGeometry args={[1.4, 0.8, 1.4]} />
+      <RoundedBox args={[1.4, 0.7, 1.4]} radius={0.1} position={[0, 0.35, 0]}>
         <meshStandardMaterial color="#FBE2C2" />
-      </mesh>
+      </RoundedBox>
       <mesh position={[0, 1.2, 0]}>
-        <cylinderGeometry args={[0.18, 0.22, 1.6, 16]} />
+        <cylinderGeometry args={[0.16, 0.22, 1.5, 16]} />
         <meshStandardMaterial color="#F08A5D" />
       </mesh>
-      <RoundedBox args={[1.6, 1.1, 0.14]} radius={0.08} position={[0, 2.1, 0]}>
+      <RoundedBox args={[1.5, 1.2, 0.16]} radius={0.08} position={[0, 2.1, 0]}>
         <meshStandardMaterial color="#2A1E2C" />
       </RoundedBox>
-      <mesh ref={screenRef} position={[0, 2.1, 0.08]}>
-        <planeGeometry args={[1.4, 0.9]} />
-        <meshStandardMaterial color={highlight ? '#FFD7A8' : '#F3A6B0'} emissive={highlight ? '#F08A5D' : '#F3A6B0'} emissiveIntensity={0.7} toneMapped={false} />
+      <mesh ref={screenRef} position={[0, 2.1, 0.09]}>
+        <planeGeometry args={[1.32, 1]} />
+        <meshStandardMaterial color="#F3A6B0" emissive="#F3A6B0" emissiveIntensity={0.7} toneMapped={false} />
       </mesh>
-      <Text position={[0, 2.25, 0.09]} fontSize={0.16} color="#2A1E2C" anchorX="center" anchorY="middle" maxWidth={1.2} textAlign="center">
+      <Text position={[0, 2.3, 0.1]} fontSize={0.16} color="#2A1E2C" anchorX="center" anchorY="middle" maxWidth={1.2} textAlign="center">
         Body Decoder
       </Text>
-      <Text position={[0, 2.0, 0.09]} fontSize={0.11} color="#2A1E2C" anchorX="center" anchorY="middle" maxWidth={1.3} textAlign="center">
+      <Text position={[0, 2.05, 0.1]} fontSize={0.1} color="#2A1E2C" anchorX="center" anchorY="middle" maxWidth={1.3} textAlign="center">
         What feels off today?
       </Text>
       {hover && (
-        <Text position={[0, 3.0, 0]} fontSize={0.18} color="#5B3A55" anchorX="center" anchorY="middle">
-          Click to start
+        <Text position={[0, 3, 0.1]} fontSize={0.14} color="#5B3A55" anchorX="center" anchorY="middle">
+          Click to start →
         </Text>
       )}
     </group>
   );
 }
 
-function PeopleCluster({ position = [0, 0, 0], flip = false }) {
-  const colors = ['#F08A5D', '#C9B8E0', '#F3A6B0', '#BFE3D7', '#FFD7A8'];
+/* ---------------- Decor ---------------- */
+
+function CeilingLights() {
+  // Two strands of bulbs hanging across the lobby ceiling.
+  const A = [-9, 8.4, -3.5];
+  const B = [9, 8.4, -3.5];
+  const C = [-9, 8.4, 5];
+  const D = [9, 8.4, 5];
   return (
-    <group position={position} rotation={[0, flip ? Math.PI : 0, 0]}>
-      {colors.slice(0, 3).map((c, i) => (
-        <Person key={i} position={[i * 0.9 - 0.9, 0, (i % 2) * 0.4]} color={c} />
+    <group>
+      <Strand from={A} to={B} count={18} color="#FFD7A8" />
+      <Strand from={C} to={D} count={18} color="#F3A6B0" />
+      <Strand from={A} to={D} count={14} color="#FBE2C2" />
+      <Strand from={B} to={C} count={14} color="#FFD7A8" />
+    </group>
+  );
+}
+
+function Strand({ from, to, count, color }) {
+  const positions = useMemo(() => {
+    const a = new THREE.Vector3(...from);
+    const b = new THREE.Vector3(...to);
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const t = i / (count - 1);
+      const p = new THREE.Vector3().lerpVectors(a, b, t);
+      p.y -= Math.sin(t * Math.PI) * 0.7;
+      out.push(p);
+    }
+    return out;
+  }, [from, to, count]);
+  const ref = useRef();
+  useFrame((s) => {
+    if (!ref.current) return;
+    const t = s.clock.elapsedTime;
+    ref.current.children.forEach((m, i) => {
+      m.material.emissiveIntensity = 0.7 + Math.sin(t * 2 + i * 0.6) * 0.25;
+    });
+  });
+  return (
+    <group ref={ref}>
+      {positions.map((p, i) => (
+        <mesh key={i} position={[p.x, p.y, p.z]}>
+          <sphereGeometry args={[0.12, 12, 10]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.85} toneMapped={false} />
+        </mesh>
       ))}
     </group>
   );
 }
 
-function Person({ position, color }) {
+function Garland() {
+  // A gently waving garland of folded flags over the back wall
+  return (
+    <group position={[0, 7.6, -6.5]}>
+      {Array.from({ length: 14 }).map((_, i) => {
+        const x = (i - 6.5) * 1.4;
+        const y = -Math.cos(((i - 6.5) / 7) * Math.PI) * 0.6;
+        const c = ['#F08A5D', '#F3A6B0', '#FFD7A8', '#C9B8E0', '#BFE3D7'][i % 5];
+        return (
+          <group key={i} position={[x, y, 0]}>
+            <mesh>
+              <planeGeometry args={[0.5, 0.8]} />
+              <meshStandardMaterial color={c} side={THREE.DoubleSide} />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+function FloorMedallion() {
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.013, 0.5]}>
+        <ringGeometry args={[5.6, 5.95, 64]} />
+        <meshStandardMaterial color="#F08A5D" />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.014, 0.5]}>
+        <ringGeometry args={[3.9, 4.1, 64]} />
+        <meshStandardMaterial color="#F3A6B0" />
+      </mesh>
+      {Array.from({ length: 24 }).map((_, i) => {
+        const a = (i / 24) * Math.PI * 2;
+        const x = Math.cos(a) * 5.0;
+        const z = Math.sin(a) * 5.0 + 0.5;
+        return (
+          <mesh key={i} position={[x, 0.015, z]} rotation={[-Math.PI / 2, 0, -a]}>
+            <planeGeometry args={[0.7, 0.12]} />
+            <meshStandardMaterial color="#F08A5D" />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+function Planter({ position, color, tall = false }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.4, 0]}>
+        <cylinderGeometry args={[0.4, 0.5, 0.8, 18]} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      <mesh position={[0, 0.85, 0]}>
+        <cylinderGeometry args={[0.42, 0.4, 0.06, 20]} />
+        <meshStandardMaterial color="#3F2A3A" />
+      </mesh>
+      {/* stems */}
+      {Array.from({ length: tall ? 6 : 4 }).map((_, i) => {
+        const a = (i / (tall ? 6 : 4)) * Math.PI * 2;
+        const r = 0.18;
+        return (
+          <group key={i} position={[Math.cos(a) * r, 0.85, Math.sin(a) * r]}>
+            <mesh position={[0, tall ? 0.9 : 0.6, 0]}>
+              <cylinderGeometry args={[0.04, 0.04, tall ? 1.8 : 1.2, 8]} />
+              <meshStandardMaterial color="#3D5C3A" />
+            </mesh>
+            <mesh position={[0, tall ? 1.85 : 1.25, 0]}>
+              <sphereGeometry args={[0.32, 16, 12]} />
+              <meshStandardMaterial color="#5C8A5C" />
+            </mesh>
+            <mesh position={[0.2, tall ? 1.7 : 1.1, 0.05]}>
+              <sphereGeometry args={[0.22, 14, 10]} />
+              <meshStandardMaterial color="#7AAB7A" />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+function RibbonQuote({ position, text, color }) {
   const ref = useRef();
   useFrame((s) => {
     if (!ref.current) return;
-    ref.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4 + position[0]) * 0.3;
+    const t = s.clock.elapsedTime;
+    ref.current.rotation.z = Math.sin(t * 0.6 + position[0]) * 0.05;
   });
   return (
     <group ref={ref} position={position}>
-      {/* pants */}
-      <mesh position={[0, 0.3, 0]}>
-        <cylinderGeometry args={[0.15, 0.18, 0.6, 12]} />
-        <meshStandardMaterial color="#3F2A3A" />
+      {/* ribbon string */}
+      <mesh position={[0, 1.5, 0]}>
+        <cylinderGeometry args={[0.012, 0.012, 3, 6]} />
+        <meshStandardMaterial color="#5B3A55" />
       </mesh>
-      {/* dress */}
-      <mesh position={[0, 0.85, 0]}>
-        <coneGeometry args={[0.32, 0.85, 16]} />
+      <mesh>
+        <planeGeometry args={[2.6, 0.7]} />
+        <meshStandardMaterial color="#FBF4EC" />
+      </mesh>
+      <mesh position={[0, 0, -0.01]}>
+        <planeGeometry args={[2.7, 0.78]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* head */}
-      <mesh position={[0, 1.4, 0]}>
-        <sphereGeometry args={[0.16, 16, 12]} />
-        <meshStandardMaterial color="#C99077" />
-      </mesh>
-      {/* hair bun */}
-      <mesh position={[0, 1.5, -0.1]}>
-        <sphereGeometry args={[0.13, 12, 10]} />
-        <meshStandardMaterial color="#241616" />
-      </mesh>
+      <Text position={[0, 0, 0.02]} fontSize={0.2} color="#2A1E2C" anchorX="center" anchorY="middle" maxWidth={2.3} textAlign="center">
+        {text}
+      </Text>
     </group>
+  );
+}
+
+function FloorCushion({ position, color }) {
+  return (
+    <RoundedBox args={[1, 0.3, 1]} radius={0.1} position={[position[0], 0.15, position[2]]}>
+      <meshStandardMaterial color={color} roughness={0.95} />
+    </RoundedBox>
   );
 }

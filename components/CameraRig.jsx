@@ -1,104 +1,103 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useArthStore } from '@/lib/store';
-import { BOOTHS } from '@/lib/booths';
 
-const PLAZA_OFFSET = new THREE.Vector3(0, 5.5, 11);
-const BOOTH_OFFSET_DIST = 8;
-const BOOTH_HEIGHT = 4.2;
+// Camera presets per scene. Each entry frames the diorama nicely.
+const PRESETS = {
+  lobby: {
+    pos: [0, 5.6, 15.5],
+    look: [0, 3, -1],
+    orbit: 0.55,
+  },
+  booth: {
+    pos: [0, 4.2, 12.5],
+    look: [0, 2.6, -2],
+    orbit: 0.5,
+  },
+  wall: {
+    pos: [0, 4.2, 11],
+    look: [0, 3.5, -3],
+    orbit: 0.35,
+  },
+  hub: {
+    pos: [0, 4.6, 13.5],
+    look: [0, 2.6, -1],
+    orbit: 0.55,
+  },
+};
 
 export default function CameraRig() {
   const { camera } = useThree();
-  const orbit = useRef(0); // rotation around avatar (player-controlled)
-  const tilt = useRef(0.32);
-  const zoom = useRef(1);
-  const dragging = useRef(false);
-  const lastX = useRef(0);
-  const lastY = useRef(0);
+  const drag = useRef({ active: false, x: 0, y: 0 });
+  const orbit = useRef(0);
+  const tilt = useRef(0);
+  const t = useRef(0);
 
   const activeBooth = useArthStore((s) => s.activeBooth);
-  const avatarPos = useArthStore((s) => s.avatarPos);
+
+  // pick a preset based on active scene
+  const preset =
+    activeBooth === null
+      ? PRESETS.lobby
+      : activeBooth === 'normalized'
+      ? PRESETS.wall
+      : activeBooth === 'hub'
+      ? PRESETS.hub
+      : PRESETS.booth;
 
   useEffect(() => {
     const onDown = (e) => {
-      if (e.button !== 0 && e.button !== 2) return;
-      dragging.current = true;
-      lastX.current = e.clientX;
-      lastY.current = e.clientY;
+      drag.current.active = true;
+      drag.current.x = e.clientX;
+      drag.current.y = e.clientY;
     };
-    const onUp = () => {
-      dragging.current = false;
-    };
+    const onUp = () => (drag.current.active = false);
     const onMove = (e) => {
-      if (!dragging.current) return;
-      const dx = e.clientX - lastX.current;
-      const dy = e.clientY - lastY.current;
-      lastX.current = e.clientX;
-      lastY.current = e.clientY;
-      orbit.current -= dx * 0.005;
-      tilt.current = THREE.MathUtils.clamp(tilt.current - dy * 0.003, 0.1, 0.85);
+      if (!drag.current.active) return;
+      const dx = e.clientX - drag.current.x;
+      const dy = e.clientY - drag.current.y;
+      drag.current.x = e.clientX;
+      drag.current.y = e.clientY;
+      orbit.current = THREE.MathUtils.clamp(orbit.current - dx * 0.0035, -preset.orbit, preset.orbit);
+      tilt.current = THREE.MathUtils.clamp(tilt.current - dy * 0.002, -0.18, 0.22);
     };
-    const onWheel = (e) => {
-      zoom.current = THREE.MathUtils.clamp(zoom.current + e.deltaY * 0.001, 0.7, 1.6);
-    };
-    const onContext = (e) => e.preventDefault();
-
     window.addEventListener('mousedown', onDown);
     window.addEventListener('mouseup', onUp);
     window.addEventListener('mousemove', onMove);
-    window.addEventListener('wheel', onWheel, { passive: true });
-    window.addEventListener('contextmenu', onContext);
     return () => {
       window.removeEventListener('mousedown', onDown);
       window.removeEventListener('mouseup', onUp);
       window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('contextmenu', onContext);
     };
-  }, []);
+  }, [preset.orbit]);
+
+  // Reset orbit on room change
+  useEffect(() => {
+    orbit.current *= 0;
+    tilt.current = 0;
+  }, [activeBooth]);
 
   useFrame((state, delta) => {
-    const dt = Math.min(delta, 0.05);
-    const target = new THREE.Vector3();
-    const desiredPos = new THREE.Vector3();
+    t.current += Math.min(delta, 0.05);
+    const drift = Math.sin(t.current * 0.18) * 0.05;
 
-    if (activeBooth) {
-      const b = BOOTHS[activeBooth];
-      const [rx, , rz] = b.room.position;
-      // Camera circles slowly around the booth center, weighted toward avatar pos
-      target.set(
-        rx * 0.6 + avatarPos[0] * 0.4,
-        1.4,
-        rz * 0.6 + avatarPos[2] * 0.4
-      );
-      const dist = BOOTH_OFFSET_DIST * zoom.current;
-      const angle = orbit.current + b.room.rotation + Math.PI;
-      desiredPos.set(
-        target.x + Math.sin(angle) * dist,
-        target.y + BOOTH_HEIGHT * (0.6 + tilt.current * 0.8),
-        target.z + Math.cos(angle) * dist
-      );
-    } else {
-      target.set(avatarPos[0], 1.4, avatarPos[2]);
-      const dist = (PLAZA_OFFSET.length()) * zoom.current;
-      const angle = orbit.current;
-      desiredPos.set(
-        target.x + Math.sin(angle) * dist * 0.9,
-        target.y + 4.5 + tilt.current * 4.5,
-        target.z + Math.cos(angle) * dist * 0.9
-      );
-    }
+    const base = new THREE.Vector3(...preset.pos);
+    const look = new THREE.Vector3(...preset.look);
 
-    camera.position.lerp(desiredPos, Math.min(1, dt * 4));
-    const lookAt = new THREE.Vector3().lerpVectors(
-      camera.position.clone().add(new THREE.Vector3(0, -1, 0)),
-      target,
-      1
-    );
-    camera.lookAt(lookAt);
+    // Apply orbit around look-at point
+    const offset = base.clone().sub(look);
+    const totalAngle = orbit.current + drift;
+    const c = Math.cos(totalAngle);
+    const s = Math.sin(totalAngle);
+    const x = offset.x * c - offset.z * s;
+    const z = offset.x * s + offset.z * c;
+    const desired = new THREE.Vector3(look.x + x, look.y + offset.y + tilt.current * 1.6, look.z + z);
+
+    camera.position.lerp(desired, Math.min(1, delta * 4));
+    camera.lookAt(look);
   });
 
   return null;

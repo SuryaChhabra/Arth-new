@@ -10,7 +10,7 @@ import { BOOTHS } from '@/lib/booths';
 export default function HotFlashChillRoom() {
   const b = BOOTHS.hotflash;
   return (
-    <group position={b.room.position} rotation={[0, b.room.rotation, 0]}>
+    <group>
       <BoothShell {...b} />
 
       <pointLight position={[0, 5, 1]} intensity={1.2} color="#BFE3D7" distance={20} />

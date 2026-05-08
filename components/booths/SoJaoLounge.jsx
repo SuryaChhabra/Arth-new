@@ -10,7 +10,7 @@ import { BOOTHS } from '@/lib/booths';
 export default function SoJaoLounge() {
   const b = BOOTHS.sojao;
   return (
-    <group position={b.room.position} rotation={[0, b.room.rotation, 0]}>
+    <group>
       <BoothShell {...b} />
 
       {/* Moonlight: dim cool key + a cool moon disc */}
