@@ -374,27 +374,45 @@ function makeSignPanel(lines, w, h, opts = {}) {
 }
 
 /* ============================================================
- * GROUND — cream event floor + radial coral paths + medallion
+ * GROUND — dark park surrounding a cream event floor + radial coral paths
  * ============================================================ */
 const groundGroup = new THREE.Group();
 
-// Outer cream base
-const baseGeo = new THREE.PlaneGeometry(220, 220, 1, 1);
-const baseMat = new THREE.MeshLambertMaterial({ color: 0xF4E0CC });
+// Dark park ground (extends far to the horizon)
+const baseGeo = new THREE.PlaneGeometry(280, 280, 1, 1);
+const baseMat = new THREE.MeshLambertMaterial({ color: 0x241636 });
 const baseFloor = new THREE.Mesh(baseGeo, baseMat);
 baseFloor.rotation.x = -Math.PI / 2;
 baseFloor.receiveShadow = true;
 groundGroup.add(baseFloor);
 
+// Cream event-floor circle (centered on the plaza)
+const eventFloor = new THREE.Mesh(
+  new THREE.CircleGeometry(48, 64),
+  new THREE.MeshLambertMaterial({ color: 0xF4E0CC })
+);
+eventFloor.rotation.x = -Math.PI / 2;
+eventFloor.position.y = 0.012;
+eventFloor.receiveShadow = true;
+groundGroup.add(eventFloor);
+
 // Slightly lighter inner stage
 const innerStage = new THREE.Mesh(
-  new THREE.CircleGeometry(70, 64),
+  new THREE.CircleGeometry(34, 64),
   new THREE.MeshLambertMaterial({ color: 0xFBE2C2 })
 );
 innerStage.rotation.x = -Math.PI / 2;
-innerStage.position.y = 0.01;
+innerStage.position.y = 0.018;
 innerStage.receiveShadow = true;
 groundGroup.add(innerStage);
+
+// Glowing rim where event floor meets dark park
+const rimGeo = new THREE.RingGeometry(47.4, 48.1, 96);
+const rimMat = new THREE.MeshBasicMaterial({ color: 0xFFB86B, transparent: true, opacity: 0.85 });
+const rim = new THREE.Mesh(rimGeo, rimMat);
+rim.rotation.x = -Math.PI / 2;
+rim.position.y = 0.022;
+groundGroup.add(rim);
 
 scene.add(groundGroup);
 
@@ -1310,6 +1328,142 @@ BOOTHS.forEach((b) => {
   }
 });
 
+/* ============================================================
+ * NIGHT ATMOSPHERE — trees + starfield + sky fairy lights + floating lanterns
+ * ============================================================ */
+
+function createPixelTree(x, z, height, leafColor, trunkColor = 0x2F1F18) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  // trunk
+  g.add(block(0.5, height, 0.5, trunkColor, 0, height / 2, 0));
+  // stacked leaf cubes
+  const sizes = [2.0, 1.5, 0.95];
+  sizes.forEach((s, i) => {
+    g.add(block(s, 0.85, s, leafColor, 0, height + 0.55 + i * 0.7, 0));
+  });
+  scene.add(g);
+}
+
+// Skip-zones: don't spawn trees too close to the central plaza or to a booth.
+function isClearOfBooths(x, z, minR) {
+  if (Math.hypot(x, z) < 14) return false; // central plaza buffer
+  for (const b of BOOTHS) {
+    if (Math.hypot(x - b.position.x, z - b.position.z) < minR) return false;
+  }
+  return true;
+}
+
+// Three concentric rings of trees forming a low-poly forest around the plaza
+const TREE_RINGS = [
+  { count: 28, radius: 56,  jitter: 5,  h: [3.0, 4.5], leaves: [0x2D4A28, 0x3D5C3A, 0x4F7A4A] },
+  { count: 36, radius: 78,  jitter: 7,  h: [3.6, 5.2], leaves: [0x1F3A22, 0x2D4A28, 0x3D5C3A] },
+  { count: 40, radius: 102, jitter: 10, h: [4.2, 6.0], leaves: [0x162A1A, 0x1F3A22, 0x2D4A28] },
+];
+TREE_RINGS.forEach((ring) => {
+  for (let i = 0; i < ring.count; i++) {
+    const a = (i / ring.count) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+    const r = ring.radius + (Math.random() - 0.5) * ring.jitter * 2;
+    const x = Math.cos(a) * r;
+    const z = Math.sin(a) * r;
+    if (!isClearOfBooths(x, z, 14)) continue;
+    const h = ring.h[0] + Math.random() * (ring.h[1] - ring.h[0]);
+    const leafColor = ring.leaves[Math.floor(Math.random() * ring.leaves.length)];
+    createPixelTree(x, z, h, leafColor);
+  }
+});
+
+// Starfield in the upper hemisphere
+const starGeo = new THREE.BufferGeometry();
+const starPositions = [];
+for (let i = 0; i < 1100; i++) {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.random() * Math.PI * 0.6;
+  const r = 90 + Math.random() * 60;
+  starPositions.push(
+    Math.sin(phi) * Math.cos(theta) * r,
+    18 + Math.cos(phi) * r * 0.6,
+    Math.sin(phi) * Math.sin(theta) * r
+  );
+}
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+const starMat = new THREE.PointsMaterial({
+  color: 0xFFE7B8, size: 0.4, transparent: true, opacity: 0.85,
+  sizeAttenuation: true, depthWrite: false,
+});
+const stars = new THREE.Points(starGeo, starMat);
+scene.add(stars);
+
+// Sky fairy-light strands criss-crossing high above the plaza
+const fairyLights = [];
+function createSkyStrand(from, to, count, color) {
+  const a = new THREE.Vector3(...from);
+  const b = new THREE.Vector3(...to);
+  for (let i = 0; i < count; i++) {
+    const t = i / (count - 1);
+    const p = new THREE.Vector3().lerpVectors(a, b, t);
+    p.y -= Math.sin(t * Math.PI) * 1.6; // sag
+    const bulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 8, 6),
+      new THREE.MeshBasicMaterial({ color })
+    );
+    bulb.position.copy(p);
+    bulb.userData.basePhase = Math.random() * Math.PI * 2;
+    scene.add(bulb);
+    fairyLights.push(bulb);
+  }
+}
+createSkyStrand([-44, 22, -22], [44, 22, -22], 32, 0xFFD7A8);
+createSkyStrand([-44, 24, 22],  [44, 24, 22],  32, 0xF3A6B0);
+createSkyStrand([-40, 22, 0],   [40, 26, 0],   30, 0xFBE2C2);
+createSkyStrand([0,  26, -46],  [0, 26, 46],   34, 0xFFD7A8);
+createSkyStrand([-46, 18, -10], [-22, 30, 14], 22, 0xF3A6B0);
+createSkyStrand([46,  18, -10], [22, 30, 14],  22, 0xF3A6B0);
+
+// Floating warm lanterns drifting above the park
+const floatingLanterns = [];
+for (let i = 0; i < 40; i++) {
+  const a = Math.random() * Math.PI * 2;
+  const r = 30 + Math.random() * 60;
+  const x = Math.cos(a) * r;
+  const z = Math.sin(a) * r;
+  const y = 8 + Math.random() * 14;
+  const lantern = new THREE.Group();
+  const orb = new THREE.Mesh(
+    new THREE.SphereGeometry(0.32, 10, 8),
+    new THREE.MeshBasicMaterial({ color: 0xFFB36B })
+  );
+  lantern.add(orb);
+  // tiny string
+  const string = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.012, 0.012, 1.6, 4),
+    new THREE.MeshBasicMaterial({ color: 0x3A2750 })
+  );
+  string.position.y = 0.95;
+  lantern.add(string);
+  lantern.position.set(x, y, z);
+  lantern.userData.baseY = y;
+  lantern.userData.phase = Math.random() * Math.PI * 2;
+  lantern.userData.orb = orb;
+  scene.add(lantern);
+  floatingLanterns.push(lantern);
+}
+
+// Distant ground lights for parallax depth
+for (let i = 0; i < 80; i++) {
+  const a = Math.random() * Math.PI * 2;
+  const r = 50 + Math.random() * 70;
+  const x = Math.cos(a) * r;
+  const z = Math.sin(a) * r;
+  if (!isClearOfBooths(x, z, 8)) continue;
+  const dot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.14, 6, 6),
+    new THREE.MeshBasicMaterial({ color: 0xFFB36B })
+  );
+  dot.position.set(x, 0.2, z);
+  scene.add(dot);
+}
+
 /* ---------- Background attendees (low-poly women in pairs) ---------- */
 function makeAttendee(x, z, kurta, pants, hair = 0x241616, rotation = 0) {
   const g = new THREE.Group();
@@ -1747,6 +1901,25 @@ function animate() {
     if (c.userData && c.userData.isRibbon) {
       c.position.y = c.userData.baseY + Math.sin(time * 0.7 + c.userData.basePhase) * 0.12;
       c.lookAt(camera.position);
+    }
+  });
+
+  // ----- Starfield slow rotation + twinkle -----
+  stars.rotation.y += dt * 0.012;
+  starMat.opacity = 0.7 + Math.sin(time * 0.5) * 0.18;
+
+  // ----- Sky fairy lights twinkle -----
+  fairyLights.forEach((b, i) => {
+    const t = time * 1.6 + b.userData.basePhase;
+    const v = 0.65 + (Math.sin(t) + 1) * 0.18;
+    b.scale.setScalar(v);
+  });
+
+  // ----- Floating lanterns bob -----
+  floatingLanterns.forEach((l) => {
+    l.position.y = l.userData.baseY + Math.sin(time * 0.45 + l.userData.phase) * 0.6;
+    if (l.userData.orb) {
+      l.userData.orb.scale.setScalar(0.95 + Math.sin(time * 1.4 + l.userData.phase) * 0.1);
     }
   });
 
