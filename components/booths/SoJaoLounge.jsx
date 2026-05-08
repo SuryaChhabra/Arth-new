@@ -127,14 +127,13 @@ export default function SoJaoLounge() {
 
       {/* ======= Center installation ======= */}
       <RugAndLED />
-      <Chaise position={[0, 0, 0.4]} />
-      <CushionGroup />
-      <ThrowBlanket />
-      <FloorTray position={[-0.3, 0.06, 1.55]} />
-      <OpenJournal position={[0.55, 0.06, 1.85]} />
-      <SideTable position={[2.2, 0, 0.35]} />
-      <MoonLamp position={[2.2, 1.05, 0.35]} />
-      <SaltLamp position={[-2.4, 0.0, 0.6]} />
+      <Chaise position={[0.45, 0, 0.25]} rotation={0.12} />
+      <FloorCushions />
+      <FloorTray position={[-0.55, 0.06, 1.55]} />
+      <OpenJournal position={[0.55, 0.06, 1.95]} />
+      <SideTable position={[2.5, 0, 0.5]} />
+      <MoonLamp position={[2.5, 1.05, 0.5]} />
+      <SaltLamp position={[-2.6, 0.0, 0.7]} />
 
       {/* ======= Stations (mounted in front of side walls) ======= */}
       <PinboardKiosk position={[-5.2, 0, -1.9]} onClick={() => open('whatkeepsyouawake')} />
@@ -521,67 +520,164 @@ function RugAndLED() {
  * Center furniture — chaise, cushions, throw, side props
  * ===================================================== */
 
-function Chaise({ position }) {
+/* ----- Curved asymmetrical chaise lounge -----
+ * Local frame:
+ *   X: length of the chaise (head end at -1.5, foot end at +1.5)
+ *   Y: vertical (floor at 0)
+ *   Z: depth front-to-back (front toward camera = +Z, back = -Z)
+ *
+ * Composition:
+ *   - upholstered base shell (curved 2D profile extruded with bevel)
+ *   - soft seat cushion on top
+ *   - long soft back cushion
+ *   - rolled headrest cushion (capsule) at the head end
+ *   - small foot armrest
+ *   - 4 brass legs
+ *   - 7 decorative pillows
+ *   - dusty-lavender throw blanket layered on the head end
+ */
+function Chaise({ position, rotation = 0 }) {
+  const profileGeom = useMemo(() => {
+    const s = new THREE.Shape();
+    // back-bottom-left (head end, back side)
+    s.moveTo(-1.55, 0);
+    // up the back of the headrest
+    s.lineTo(-1.55, 0.95);
+    // curl over the top
+    s.bezierCurveTo(-1.55, 1.45, -1.2, 1.65, -0.85, 1.55);
+    // inside of the curl
+    s.bezierCurveTo(-0.55, 1.45, -0.5, 1.15, -0.5, 0.85);
+    // back rest dips down to the seat
+    s.lineTo(-0.5, 0.55);
+    // along the seat top toward foot end
+    s.lineTo(1.4, 0.55);
+    // small rolled foot edge
+    s.bezierCurveTo(1.55, 0.55, 1.62, 0.5, 1.6, 0.38);
+    // down the front of the foot end
+    s.lineTo(1.6, 0);
+    // back along the floor
+    s.lineTo(-1.55, 0);
+    return new THREE.ExtrudeGeometry(s, {
+      depth: 1.3,
+      bevelEnabled: true,
+      bevelThickness: 0.08,
+      bevelSize: 0.08,
+      bevelSegments: 4,
+    });
+  }, []);
+
   return (
-    <group position={position}>
-      {/* short walnut legs */}
-      {[-1.05, 0, 1.05].map((x, i) => (
-        <mesh key={i} position={[x, 0.13, 0]}>
-          <cylinderGeometry args={[0.06, 0.05, 0.26, 12]} />
-          <meshStandardMaterial color={PALETTE.walnutDark} />
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* Upholstered curved base shell */}
+      <mesh geometry={profileGeom} position={[0, 0, -0.65]} castShadow receiveShadow>
+        <meshStandardMaterial color={PALETTE.couchRoseDark} roughness={0.95} />
+      </mesh>
+
+      {/* Soft seat cushion (sits on top of the base seat) */}
+      <RoundedBox args={[2.5, 0.22, 1.25]} radius={0.12} position={[0.45, 0.7, 0.05]} castShadow>
+        <meshStandardMaterial color={PALETTE.couchRose} roughness={0.96} />
+      </RoundedBox>
+
+      {/* Soft long back cushion */}
+      <RoundedBox args={[2.0, 0.46, 0.35]} radius={0.16} position={[0.5, 0.95, -0.45]} castShadow>
+        <meshStandardMaterial color={PALETTE.couchRose} roughness={0.96} />
+      </RoundedBox>
+
+      {/* Rolled headrest cushion — soft capsule at the curl */}
+      <mesh position={[-1.05, 1.4, 0.0]} rotation={[Math.PI / 2, 0, 0.05]} castShadow>
+        <capsuleGeometry args={[0.24, 0.85, 8, 16]} />
+        <meshStandardMaterial color={PALETTE.couchRose} roughness={0.96} />
+      </mesh>
+
+      {/* Tiny foot armrest curl */}
+      <mesh position={[1.5, 0.65, 0.05]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <capsuleGeometry args={[0.12, 0.95, 6, 14]} />
+        <meshStandardMaterial color={PALETTE.couchRoseDark} roughness={0.95} />
+      </mesh>
+
+      {/* 4 short brass legs */}
+      {[
+        [-1.35, -0.5],
+        [-1.35, 0.5],
+        [1.4, -0.5],
+        [1.4, 0.5],
+      ].map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.07, z]}>
+          <cylinderGeometry args={[0.045, 0.035, 0.14, 12]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.35} />
         </mesh>
       ))}
-      {/* base seat */}
-      <RoundedBox args={[3.0, 0.55, 1.5]} radius={0.18} position={[0, 0.55, 0]} castShadow>
-        <meshStandardMaterial color={PALETTE.couchRose} roughness={0.95} />
-      </RoundedBox>
-      {/* head bolster (left) */}
-      <RoundedBox args={[1.05, 1.15, 1.5]} radius={0.22} position={[-0.95, 1.25, -0.1]} castShadow>
-        <meshStandardMaterial color={PALETTE.couchRose} roughness={0.95} />
-      </RoundedBox>
-      {/* low back rest (right) */}
-      <RoundedBox args={[2.0, 0.5, 1.4]} radius={0.18} position={[0.55, 0.95, -0.45]} castShadow>
-        <meshStandardMaterial color={PALETTE.couchRoseDark} roughness={0.95} />
-      </RoundedBox>
-      {/* tiny foot lights under the chaise */}
-      <mesh position={[0, 0.04, 0.6]}>
-        <boxGeometry args={[2.6, 0.02, 0.06]} />
-        <meshStandardMaterial color={PALETTE.amber} emissive={PALETTE.amber} emissiveIntensity={0.9} toneMapped={false} />
-      </mesh>
-    </group>
-  );
-}
 
-function CushionGroup() {
-  const cs = [
-    { p: [-0.85, 1.12, 0.0], s: 0.55, c: PALETTE.cushionBlush },
-    { p: [-0.2, 1.05, 0.05], s: 0.5, c: PALETTE.cushionLavender },
-    { p: [0.4, 1.05, 0.0], s: 0.48, c: PALETTE.cushionPlum },
-    { p: [0.95, 1.05, 0.05], s: 0.46, c: PALETTE.cushionPeach },
-    { p: [0.0, 1.0, 0.5], s: 0.36, c: PALETTE.cushionCream },
-  ];
-  return (
-    <group position={[0, 0, 0.4]}>
-      {cs.map((c, i) => (
-        <RoundedBox key={i} args={[c.s, c.s * 0.7, c.s]} radius={0.06} position={c.p} castShadow>
-          <meshStandardMaterial color={c.c} roughness={0.95} />
-        </RoundedBox>
-      ))}
+      {/* 7 decorative pillows */}
+      {/* 1. Large square in muted lavender */}
+      <RoundedBox args={[0.62, 0.62, 0.18]} radius={0.06} position={[-0.55, 1.05, -0.18]} rotation={[0, 0, -0.05]} castShadow>
+        <meshStandardMaterial color={PALETTE.cushionLavender} roughness={0.96} />
+      </RoundedBox>
+      {/* 2. Large square in blush pink */}
+      <RoundedBox args={[0.6, 0.6, 0.18]} radius={0.06} position={[0.1, 1.04, -0.2]} rotation={[0, 0, 0.04]} castShadow>
+        <meshStandardMaterial color={PALETTE.cushionBlush} roughness={0.96} />
+      </RoundedBox>
+      {/* 3. Rectangular lumbar in soft peach */}
+      <RoundedBox args={[0.78, 0.34, 0.2]} radius={0.07} position={[0.85, 0.92, -0.2]} rotation={[0, 0, -0.06]} castShadow>
+        <meshStandardMaterial color={PALETTE.cushionPeach} roughness={0.95} />
+      </RoundedBox>
+      {/* 4. Round bolster in deeper plum (horizontal log near head end) */}
+      <mesh position={[-0.5, 0.86, 0.32]} rotation={[Math.PI / 2, 0, 0.04]} castShadow>
+        <capsuleGeometry args={[0.16, 0.7, 6, 14]} />
+        <meshStandardMaterial color={PALETTE.cushionPlum} roughness={0.95} />
+      </mesh>
+      {/* 5. Textured cream cushion */}
+      <RoundedBox args={[0.45, 0.45, 0.18]} radius={0.05} position={[1.3, 0.9, -0.18]} rotation={[0, 0, 0.08]} castShadow>
+        <meshStandardMaterial color={PALETTE.cushionCream} roughness={1} />
+      </RoundedBox>
+      {/* tufting stitch */}
+      <mesh position={[1.3, 1.0, -0.08]}>
+        <sphereGeometry args={[0.025, 10, 8]} />
+        <meshStandardMaterial color={PALETTE.gold} metalness={0.7} roughness={0.4} />
+      </mesh>
+      {/* 6. Small patterned star pillow (front) */}
+      <RoundedBox args={[0.34, 0.34, 0.13]} radius={0.04} position={[0.45, 0.86, 0.4]} rotation={[Math.PI / 2 - 0.1, 0, 0.6]} castShadow>
+        <meshStandardMaterial color="#9A7BA9" roughness={0.95} />
+      </RoundedBox>
+      {/* tiny gold star embossed */}
+      <Text position={[0.45, 0.95, 0.41]} rotation={[-0.1, 0, 0.6]} fontSize={0.13} color={PALETTE.gold} anchorX="center" anchorY="middle" outlineWidth={0.005} outlineColor={PALETTE.goldGlow}>
+        ✦
+      </Text>
+      {/* 7. Small extra cushion — mauve-blush blend */}
+      <RoundedBox args={[0.32, 0.32, 0.12]} radius={0.04} position={[-0.95, 0.95, 0.4]} rotation={[Math.PI / 2 - 0.05, 0, 0.3]} castShadow>
+        <meshStandardMaterial color="#D49AAA" roughness={0.96} />
+      </RoundedBox>
+
+      {/* === Throw blanket — folded layered fabric draped on the head end === */}
+      <ThrowBlanket />
     </group>
   );
 }
 
 function ThrowBlanket() {
-  // Simple folded blanket draped over the right end of the chaise
+  // Multiple layered RoundedBoxes at varied angles to suggest folded knit fabric.
   return (
-    <group position={[1.2, 0, 0.4]}>
-      <mesh position={[0, 0.85, 0.45]} rotation={[0.2, 0, -0.18]}>
-        <boxGeometry args={[1.2, 0.05, 1.8]} />
-        <meshStandardMaterial color={PALETTE.cushionLavender} roughness={0.95} />
-      </mesh>
-      <mesh position={[0.4, 0.55, 0.65]} rotation={[0.6, 0, -0.1]}>
-        <boxGeometry args={[0.46, 0.05, 1.6]} />
-        <meshStandardMaterial color={PALETTE.cushionLavender} roughness={0.95} />
+    <group position={[-1.0, 0, 0]}>
+      {/* main fold draped over the seat near head end */}
+      <RoundedBox args={[1.1, 0.06, 0.85]} radius={0.05} position={[0, 0.7, 0.18]} rotation={[0.18, 0.05, -0.12]} castShadow>
+        <meshStandardMaterial color="#A99CB5" roughness={1} />
+      </RoundedBox>
+      {/* second layered fold */}
+      <RoundedBox args={[0.9, 0.06, 0.7]} radius={0.05} position={[-0.05, 0.79, 0.32]} rotation={[0.34, -0.08, -0.05]} castShadow>
+        <meshStandardMaterial color="#B9ACC5" roughness={1} />
+      </RoundedBox>
+      {/* hanging fold spilling over the front edge */}
+      <RoundedBox args={[0.55, 0.06, 0.42]} radius={0.05} position={[0.05, 0.45, 0.62]} rotation={[1.15, 0.05, -0.08]} castShadow>
+        <meshStandardMaterial color="#A99CB5" roughness={1} />
+      </RoundedBox>
+      {/* small bunched fold */}
+      <RoundedBox args={[0.42, 0.06, 0.32]} radius={0.04} position={[-0.18, 0.6, 0.45]} rotation={[0.65, 0.18, 0.18]} castShadow>
+        <meshStandardMaterial color="#C4B5CC" roughness={1} />
+      </RoundedBox>
+      {/* fringe hint */}
+      <mesh position={[0.1, 0.35, 0.78]} rotation={[1.2, 0.05, -0.08]}>
+        <boxGeometry args={[0.55, 0.04, 0.04]} />
+        <meshStandardMaterial color="#8E7C9A" roughness={1} />
       </mesh>
     </group>
   );
@@ -590,30 +686,97 @@ function ThrowBlanket() {
 function FloorTray({ position }) {
   return (
     <group position={position}>
-      <mesh position={[0, 0.02, 0]}>
-        <boxGeometry args={[0.8, 0.04, 0.5]} />
-        <meshStandardMaterial color={PALETTE.walnut} roughness={0.7} />
+      {/* round wooden tray base */}
+      <mesh position={[0, 0.025, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.46, 0.46, 0.05, 32]} />
+        <meshStandardMaterial color={PALETTE.walnut} roughness={0.65} />
       </mesh>
-      {/* glass */}
-      <mesh position={[-0.22, 0.18, 0]}>
-        <cylinderGeometry args={[0.07, 0.06, 0.28, 16]} />
-        <meshStandardMaterial color="#E0DDF0" transparent opacity={0.55} roughness={0.2} />
+      {/* tray rim (slight raised edge) */}
+      <mesh position={[0, 0.06, 0]}>
+        <torusGeometry args={[0.44, 0.018, 8, 32]} />
+        <meshStandardMaterial color={PALETTE.walnutDark} roughness={0.7} />
       </mesh>
-      {/* carafe */}
-      <mesh position={[0.05, 0.22, 0]}>
-        <cylinderGeometry args={[0.09, 0.1, 0.36, 16]} />
-        <meshStandardMaterial color="#E0DDF0" transparent opacity={0.6} roughness={0.2} />
-      </mesh>
-      <mesh position={[0.05, 0.42, 0]}>
-        <cylinderGeometry args={[0.04, 0.05, 0.06, 12]} />
-        <meshStandardMaterial color="#E0DDF0" transparent opacity={0.6} roughness={0.2} />
-      </mesh>
-      {/* candle */}
-      <mesh position={[0.28, 0.07, -0.05]}>
-        <cylinderGeometry args={[0.06, 0.06, 0.1, 14]} />
-        <meshStandardMaterial color={PALETTE.cushionCream} />
-      </mesh>
-      <Flame position={[0.28, 0.18, -0.05]} />
+      {/* tiny brass handles */}
+      {[-1, 1].map((s, i) => (
+        <mesh key={i} position={[s * 0.46, 0.08, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <torusGeometry args={[0.04, 0.012, 6, 12, Math.PI]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.35} />
+        </mesh>
+      ))}
+
+      {/* === Glass carafe with water === */}
+      <group position={[-0.2, 0.06, 0.0]}>
+        {/* body */}
+        <mesh position={[0, 0.2, 0]}>
+          <cylinderGeometry args={[0.095, 0.105, 0.4, 20]} />
+          <meshStandardMaterial color="#E0DDF0" transparent opacity={0.45} roughness={0.12} metalness={0.05} />
+        </mesh>
+        {/* water level inside */}
+        <mesh position={[0, 0.18, 0]}>
+          <cylinderGeometry args={[0.088, 0.098, 0.28, 20]} />
+          <meshStandardMaterial color="#A8C4DE" transparent opacity={0.5} roughness={0.15} />
+        </mesh>
+        {/* neck */}
+        <mesh position={[0, 0.46, 0]}>
+          <cylinderGeometry args={[0.045, 0.055, 0.08, 14]} />
+          <meshStandardMaterial color="#E0DDF0" transparent opacity={0.55} roughness={0.12} />
+        </mesh>
+        {/* highlight on side */}
+        <mesh position={[-0.08, 0.22, 0.04]}>
+          <planeGeometry args={[0.03, 0.18]} />
+          <meshStandardMaterial color="#FBF4EC" transparent opacity={0.55} />
+        </mesh>
+      </group>
+
+      {/* === Short glass === */}
+      <group position={[0.05, 0.06, 0.18]}>
+        <mesh position={[0, 0.11, 0]}>
+          <cylinderGeometry args={[0.07, 0.06, 0.2, 18]} />
+          <meshStandardMaterial color="#E0DDF0" transparent opacity={0.4} roughness={0.12} metalness={0.05} />
+        </mesh>
+        {/* water inside */}
+        <mesh position={[0, 0.09, 0]}>
+          <cylinderGeometry args={[0.063, 0.057, 0.14, 18]} />
+          <meshStandardMaterial color="#A8C4DE" transparent opacity={0.5} roughness={0.15} />
+        </mesh>
+        {/* highlight */}
+        <mesh position={[-0.058, 0.13, 0.02]}>
+          <planeGeometry args={[0.018, 0.1]} />
+          <meshStandardMaterial color="#FBF4EC" transparent opacity={0.55} />
+        </mesh>
+      </group>
+
+      {/* === Tea light in brass cup === */}
+      <group position={[0.22, 0.06, -0.1]}>
+        <mesh position={[0, 0.04, 0]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.06, 16]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.8} roughness={0.35} />
+        </mesh>
+        {/* wax */}
+        <mesh position={[0, 0.07, 0]}>
+          <cylinderGeometry args={[0.055, 0.055, 0.012, 16]} />
+          <meshStandardMaterial color={PALETTE.cushionCream} />
+        </mesh>
+        <Flame position={[0, 0.13, 0]} />
+      </group>
+
+      {/* === Small ceramic bowl === */}
+      <group position={[0.05, 0.06, -0.22]}>
+        <mesh position={[0, 0.06, 0]}>
+          <sphereGeometry args={[0.09, 18, 14, 0, Math.PI * 2, Math.PI * 0.4, Math.PI * 0.6]} />
+          <meshStandardMaterial color="#E2D2EE" roughness={0.55} />
+        </mesh>
+        {/* inner rim */}
+        <mesh position={[0, 0.105, 0]}>
+          <torusGeometry args={[0.075, 0.008, 6, 18]} />
+          <meshStandardMaterial color="#C0AED0" roughness={0.55} />
+        </mesh>
+        {/* tiny dried flower in the bowl */}
+        <mesh position={[0, 0.115, 0]}>
+          <coneGeometry args={[0.04, 0.06, 8]} />
+          <meshStandardMaterial color="#A480C8" />
+        </mesh>
+      </group>
     </group>
   );
 }
@@ -634,21 +797,143 @@ function Flame({ position }) {
   );
 }
 
+/* ----- Floor cushions arranged around the rug -----
+ * Soft, low, inviting. Placed around the central ritual zone so a
+ * visitor could sit on the floor.
+ */
+function FloorCushions() {
+  return (
+    <group>
+      {/* 1. Round tufted cushion, mauve, front-left */}
+      <group position={[-2.0, 0, 2.4]}>
+        <mesh position={[0, 0.18, 0]} castShadow>
+          <cylinderGeometry args={[0.5, 0.5, 0.32, 32]} />
+          <meshStandardMaterial color="#9D7AA0" roughness={1} />
+        </mesh>
+        {/* tufting stitches forming a soft star */}
+        <mesh position={[0, 0.34, 0]}>
+          <sphereGeometry args={[0.04, 12, 10]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.7} roughness={0.4} />
+        </mesh>
+        {[0, 1, 2, 3, 4].map((i) => {
+          const a = (i / 5) * Math.PI * 2;
+          return (
+            <mesh key={i} position={[Math.cos(a) * 0.28, 0.34, Math.sin(a) * 0.28]}>
+              <sphereGeometry args={[0.018, 8, 6]} />
+              <meshStandardMaterial color="#7A5C7E" />
+            </mesh>
+          );
+        })}
+      </group>
+
+      {/* 2. Oval cushion, blush, front-right */}
+      <group position={[2.05, 0, 2.55]} rotation={[0, 0.35, 0]}>
+        <mesh position={[0, 0.16, 0]} castShadow scale={[1.5, 1, 1]}>
+          <cylinderGeometry args={[0.42, 0.42, 0.3, 32]} />
+          <meshStandardMaterial color={PALETTE.cushionBlush} roughness={1} />
+        </mesh>
+        {/* center seam */}
+        <mesh position={[0, 0.32, 0]} scale={[1.3, 1, 1]}>
+          <torusGeometry args={[0.32, 0.012, 6, 32]} />
+          <meshStandardMaterial color="#C18A93" />
+        </mesh>
+      </group>
+
+      {/* 3. Folded cushion, plum, right side */}
+      <group position={[2.7, 0, 0.8]} rotation={[0, -0.3, 0]}>
+        <RoundedBox args={[0.78, 0.18, 0.62]} radius={0.05} position={[0, 0.1, 0]} castShadow>
+          <meshStandardMaterial color="#5C3F5E" roughness={0.95} />
+        </RoundedBox>
+        <RoundedBox args={[0.7, 0.16, 0.55]} radius={0.05} position={[0.04, 0.27, 0.02]} rotation={[0, 0.18, 0]} castShadow>
+          <meshStandardMaterial color="#704C72" roughness={0.95} />
+        </RoundedBox>
+        {/* tassel */}
+        <mesh position={[0.36, 0.32, 0.28]}>
+          <coneGeometry args={[0.025, 0.08, 6]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.6} roughness={0.5} />
+        </mesh>
+      </group>
+
+      {/* 4. Small square floor pillow, peach, center-left */}
+      <group position={[-1.4, 0, 1.6]} rotation={[0, -0.45, 0]}>
+        <RoundedBox args={[0.5, 0.18, 0.5]} radius={0.06} position={[0, 0.1, 0]} castShadow>
+          <meshStandardMaterial color={PALETTE.cushionPeach} roughness={0.95} />
+        </RoundedBox>
+        {/* corner tassel */}
+        <mesh position={[0.22, 0.22, 0.22]}>
+          <sphereGeometry args={[0.04, 12, 10]} />
+          <meshStandardMaterial color="#D89466" />
+        </mesh>
+      </group>
+
+      {/* 5. Small extra round cushion, lavender, between the rug and the chaise */}
+      <group position={[-2.6, 0, 1.4]} rotation={[0, 0.2, 0]}>
+        <mesh position={[0, 0.14, 0]} castShadow>
+          <cylinderGeometry args={[0.36, 0.36, 0.26, 24]} />
+          <meshStandardMaterial color={PALETTE.cushionLavender} roughness={1} />
+        </mesh>
+        <mesh position={[0, 0.28, 0]}>
+          <torusGeometry args={[0.3, 0.012, 6, 28]} />
+          <meshStandardMaterial color="#9181A0" />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
 function OpenJournal({ position }) {
   return (
     <group position={position}>
-      <mesh rotation={[-Math.PI / 2, 0, 0.18]} position={[-0.18, 0, 0]}>
-        <planeGeometry args={[0.42, 0.55]} />
-        <meshStandardMaterial color="#FBF4EC" />
+      {/* slight book thickness underneath the pages */}
+      <RoundedBox args={[0.86, 0.04, 0.6]} radius={0.02} position={[0, -0.005, 0]}>
+        <meshStandardMaterial color="#9C7BAE" roughness={0.85} />
+      </RoundedBox>
+      {/* left page */}
+      <mesh rotation={[-Math.PI / 2, 0, 0.06]} position={[-0.21, 0.025, 0]}>
+        <planeGeometry args={[0.4, 0.56]} />
+        <meshStandardMaterial color="#FBF4EC" roughness={0.85} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, -0.18]} position={[0.18, 0, 0]}>
-        <planeGeometry args={[0.42, 0.55]} />
-        <meshStandardMaterial color="#FFFFFF" />
+      {/* right page */}
+      <mesh rotation={[-Math.PI / 2, 0, -0.06]} position={[0.21, 0.025, 0]}>
+        <planeGeometry args={[0.4, 0.56]} />
+        <meshStandardMaterial color="#FFFFFF" roughness={0.85} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-        <planeGeometry args={[0.04, 0.55]} />
-        <meshStandardMaterial color={PALETTE.cushionLavender} />
+      {/* spine seam */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.027, 0]}>
+        <planeGeometry args={[0.04, 0.56]} />
+        <meshStandardMaterial color={PALETTE.cushionLavender} roughness={0.9} />
       </mesh>
+      {/* faint horizontal lines suggesting unread pages — ultra subtle */}
+      {[-0.18, -0.04, 0.1].map((y, i) => (
+        <mesh key={`l${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[-0.21, 0.028, y]}>
+          <planeGeometry args={[0.32, 0.005]} />
+          <meshStandardMaterial color="#D6CABF" />
+        </mesh>
+      ))}
+
+      {/* === Pen lying diagonally across the journal === */}
+      <group position={[0.05, 0.04, 0.08]} rotation={[0, 0.65, 0]}>
+        {/* barrel */}
+        <mesh rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.42, 14]} />
+          <meshStandardMaterial color="#3F2A30" roughness={0.45} />
+        </mesh>
+        {/* gold cap end */}
+        <mesh position={[-0.21, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.014, 0.014, 0.06, 14]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.3} />
+        </mesh>
+        {/* gold tip */}
+        <mesh position={[0.22, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
+          <coneGeometry args={[0.013, 0.055, 12]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.3} />
+        </mesh>
+        {/* clip */}
+        <mesh position={[-0.12, 0.018, 0]}>
+          <boxGeometry args={[0.08, 0.008, 0.012]} />
+          <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.3} />
+        </mesh>
+      </group>
     </group>
   );
 }
