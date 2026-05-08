@@ -152,12 +152,12 @@ export default function SoJaoLounge() {
 
       {/* ======= Foreground props ======= */}
       <PhoneBasket position={[-4.1, 0, 2.4]} onClick={() => open('phoneparking')} />
+      <LeafyPlant position={[-5.0, 0, 1.0]} />
       <SleepCircleSign position={[4.6, 0, 2.4]} onClick={() => open('joincircle')} />
 
       {/* ======= Ambient props ======= */}
-      <FloorLamp position={[-6.4, 0, 2.4]} />
+      <FloorLamp position={[-6.0, 0, 2.6]} />
       <FloorLamp position={[6.4, 0, 2.4]} />
-      <Planter position={[-6.6, 0, -0.4]} />
       <Planter position={[6.6, 0, -0.4]} />
     </group>
   );
@@ -1726,11 +1726,22 @@ function Candle({ position }) {
  * Foreground props: phone basket + Sleep Circle sign
  * ===================================================== */
 
+/* ================================================================
+ * Phone Parking corner — woven rattan basket with phones + throw
+ * ================================================================ */
+
 function PhoneBasket({ position, onClick }) {
   const [hover, setHover] = useState(false);
+  const ringRef = useRef();
+  useFrame((s) => {
+    if (!ringRef.current) return;
+    ringRef.current.material.emissiveIntensity = (hover ? 1.2 : 0.7) + Math.sin(s.clock.elapsedTime * 1.5) * 0.18;
+  });
+
   return (
     <group
       position={position}
+      rotation={[0, -0.22, 0]}
       onPointerOver={(e) => {
         e.stopPropagation();
         setHover(true);
@@ -1745,64 +1756,306 @@ function PhoneBasket({ position, onClick }) {
         onClick();
       }}
     >
-      {/* basket body */}
-      <mesh position={[0, 0.55, 0]} castShadow>
-        <cylinderGeometry args={[0.85, 0.65, 0.95, 32]} />
-        <meshStandardMaterial color="#7A5841" roughness={0.95} />
+      {/* Soft circular floor glow / hotspot ring */}
+      <mesh ref={ringRef} position={[0, 0.014, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.95, 1.1, 36]} />
+        <meshStandardMaterial color={PALETTE.amber} emissive={PALETTE.amber} emissiveIntensity={0.7} toneMapped={false} transparent opacity={0.7} />
       </mesh>
-      {Array.from({ length: 7 }).map((_, i) => (
-        <mesh key={i} position={[0, 0.18 + i * 0.13, 0]}>
-          <torusGeometry args={[0.78 - i * 0.025, 0.02, 8, 32]} />
-          <meshStandardMaterial color="#5B3A2A" roughness={0.9} />
+      <mesh position={[0, 0.013, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.95, 36]} />
+        <meshStandardMaterial color={PALETTE.amber} emissive={PALETTE.amber} emissiveIntensity={0.18} transparent opacity={0.22} toneMapped={false} />
+      </mesh>
+
+      {/* Woven basket body */}
+      <WovenBasketBody />
+
+      {/* High arched handle */}
+      <BasketHandle />
+
+      {/* Folded lavender throw spilling over the right rim toward camera */}
+      <BasketThrow />
+
+      {/* Phones inside, peeking at varied angles */}
+      <BasketPhones />
+
+      {/* Brass + cream tassel hanging from the handle */}
+      <Tassel position={[0.55, 1.55, 0]} />
+      <Tassel position={[-0.55, 1.55, 0]} />
+
+      {/* Tiny elegant phone-symbol tag near the rim — minimal text */}
+      <group position={[0, 1.18, 0.92]} rotation={[0.2, 0, 0]}>
+        <mesh>
+          <planeGeometry args={[0.32, 0.18]} />
+          <meshStandardMaterial color="#FBF4EC" roughness={0.7} />
         </mesh>
-      ))}
-      {/* handle */}
-      <mesh position={[0, 1.15, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.65, 0.05, 10, 28, Math.PI]} />
-        <meshStandardMaterial color="#5B3A2A" />
-      </mesh>
-      {/* draped throw */}
-      <mesh position={[0, 0.95, 0.6]} rotation={[0.5, 0, 0]}>
-        <planeGeometry args={[1.4, 0.7]} />
-        <meshStandardMaterial color={PALETTE.cushionLavender} roughness={0.95} side={THREE.DoubleSide} />
-      </mesh>
-      {/* phones peeking out */}
-      <Phone position={[-0.28, 1.2, 0.05]} screen="#7BA8C8" />
-      <Phone position={[0, 1.25, 0.1]} screen="#F3A6B0" />
-      <Phone position={[0.3, 1.2, 0.05]} screen="#C9B8E0" />
-      {/* tiny phone icon glyph above to disambiguate without a label */}
-      <Text position={[0, 1.6, 0.05]} fontSize={0.2} color={PALETTE.gold} anchorX="center" anchorY="middle" outlineWidth={0.005} outlineColor={PALETTE.goldGlow}>
-        📱
-      </Text>
+        <mesh position={[0, 0, 0.005]}>
+          <planeGeometry args={[0.3, 0.16]} />
+          <meshStandardMaterial color={PALETTE.cushionCream} roughness={0.7} />
+        </mesh>
+        <Text position={[0, 0, 0.01]} fontSize={0.09} color={PALETTE.walnutDark} anchorX="center" anchorY="middle">
+          ⌖
+        </Text>
+        {/* tiny twine */}
+        <mesh position={[0, 0.13, 0]}>
+          <cylinderGeometry args={[0.005, 0.005, 0.06, 6]} />
+          <meshStandardMaterial color="#7A5232" />
+        </mesh>
+      </group>
+
       {hover && (
-        <Html position={[0, 1.95, 0]} center distanceFactor={9} pointerEvents="none">
-          <div className="px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap pointer-events-none"
-            style={{ background: 'rgba(31,18,40,0.85)', color: '#FFE7B8', backdropFilter: 'blur(6px)', border: '1px solid rgba(214,168,90,0.5)' }}>
+        <Html position={[0, 2.05, 0]} center distanceFactor={9} pointerEvents="none">
+          <div
+            className="px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap pointer-events-none"
+            style={{
+              background: 'rgba(31,18,40,0.85)',
+              color: '#FFE7B8',
+              backdropFilter: 'blur(6px)',
+              border: '1px solid rgba(214,168,90,0.5)',
+            }}
+          >
             Phone Parking
           </div>
         </Html>
       )}
       {hover && (
         <mesh position={[0, 0.55, 0]}>
-          <cylinderGeometry args={[0.92, 0.72, 0.97, 32]} />
-          <meshStandardMaterial color={PALETTE.amber} transparent opacity={0.18} emissive={PALETTE.amber} emissiveIntensity={0.7} />
+          <cylinderGeometry args={[0.95, 0.75, 0.99, 32]} />
+          <meshStandardMaterial color={PALETTE.amber} transparent opacity={0.16} emissive={PALETTE.amber} emissiveIntensity={0.6} toneMapped={false} />
         </mesh>
       )}
     </group>
   );
 }
 
-function Phone({ position, screen }) {
+/* ----- Woven rattan basket body -----
+ * Inner solid + 14 vertical staves + 5 horizontal weave bands
+ * with alternating in/out segments to suggest over-under weave.
+ */
+function WovenBasketBody() {
+  const rTop = 0.85;
+  const rBot = 0.65;
+  const height = 0.98;
+
+  const verticals = 14;
+  const bandCount = 5;
+  const segPerBand = 28;
+
   return (
-    <group position={position} rotation={[-0.45, 0, 0]}>
-      <mesh>
-        <boxGeometry args={[0.22, 0.42, 0.025]} />
-        <meshStandardMaterial color="#1a0f12" />
+    <group position={[0, height / 2 + 0.04, 0]}>
+      {/* base flat bottom */}
+      <mesh position={[0, -height / 2 + 0.02, 0]} receiveShadow>
+        <cylinderGeometry args={[rBot * 0.96, rBot * 0.96, 0.04, 24]} />
+        <meshStandardMaterial color="#5C3F2A" roughness={0.9} />
       </mesh>
-      <mesh position={[0, 0, 0.014]}>
-        <planeGeometry args={[0.18, 0.36]} />
-        <meshStandardMaterial color={screen} emissive={screen} emissiveIntensity={0.6} toneMapped={false} />
+
+      {/* inner solid body — warm tan */}
+      <mesh castShadow receiveShadow>
+        <cylinderGeometry args={[rTop * 0.96, rBot * 0.96, height, 36]} />
+        <meshStandardMaterial color="#9F7448" roughness={0.95} />
       </mesh>
+
+      {/* vertical staves (warp) */}
+      {Array.from({ length: verticals }).map((_, i) => {
+        const a = (i / verticals) * Math.PI * 2;
+        // taper offset average
+        const r = (rTop + rBot) / 2 * 0.99;
+        return (
+          <mesh
+            key={`v${i}`}
+            position={[Math.cos(a) * r, 0, Math.sin(a) * r]}
+            rotation={[0, -a, 0]}
+          >
+            <boxGeometry args={[0.018, height + 0.02, 0.05]} />
+            <meshStandardMaterial color="#7A5232" roughness={0.92} />
+          </mesh>
+        );
+      })}
+
+      {/* Horizontal woven bands — alternating in/out segments */}
+      {Array.from({ length: bandCount }).map((_, h) => {
+        const t = (h + 0.6) / (bandCount + 0.2);
+        const y = -height / 2 + t * height;
+        const r = THREE.MathUtils.lerp(rBot, rTop, t);
+        return (
+          <group key={`h${h}`} position={[0, y, 0]}>
+            {Array.from({ length: segPerBand }).map((_, i) => {
+              const a = ((i + (h % 2 === 0 ? 0 : 0.5)) / segPerBand) * Math.PI * 2;
+              const isOuter = i % 2 === 0;
+              const rr = r + (isOuter ? 0.025 : -0.005);
+              const c = isOuter ? '#B8875B' : '#8B6539';
+              return (
+                <mesh
+                  key={`hs${i}`}
+                  position={[Math.cos(a) * rr, 0, Math.sin(a) * rr]}
+                  rotation={[0, -a, 0]}
+                >
+                  <boxGeometry args={[0.012, 0.07, 0.062]} />
+                  <meshStandardMaterial color={c} roughness={0.92} />
+                </mesh>
+              );
+            })}
+          </group>
+        );
+      })}
+
+      {/* Top rim — rolled wrap */}
+      <mesh position={[0, height / 2 + 0.02, 0]}>
+        <torusGeometry args={[rTop, 0.05, 14, 40]} />
+        <meshStandardMaterial color="#5C3F2A" roughness={0.85} />
+      </mesh>
+      <mesh position={[0, height / 2 + 0.06, 0]}>
+        <torusGeometry args={[rTop * 0.95, 0.025, 8, 36]} />
+        <meshStandardMaterial color="#7A5232" roughness={0.85} />
+      </mesh>
+      {/* Bottom rim */}
+      <mesh position={[0, -height / 2, 0]}>
+        <torusGeometry args={[rBot, 0.04, 12, 32]} />
+        <meshStandardMaterial color="#5C3F2A" roughness={0.85} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ----- Tall arched handle ----- */
+function BasketHandle() {
+  return (
+    <group position={[0, 1.06, 0]}>
+      {/* main arched handle — taller, more graceful */}
+      <mesh position={[0, 0.5, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <torusGeometry args={[0.6, 0.045, 12, 28, Math.PI]} />
+        <meshStandardMaterial color="#5C3F2A" roughness={0.85} />
+      </mesh>
+      {/* twine wrap rings on the handle */}
+      {[-0.5, -0.3, 0.0, 0.3, 0.5].map((tt, i) => {
+        const a = tt * Math.PI;
+        const x = Math.cos(a) * 0.6;
+        const y = Math.sin(a) * 0.6 + 0.5;
+        return (
+          <mesh key={i} position={[x, y, 0]} rotation={[0, 0, a + Math.PI / 2]}>
+            <torusGeometry args={[0.05, 0.008, 6, 16]} />
+            <meshStandardMaterial color="#B8875B" roughness={0.9} />
+          </mesh>
+        );
+      })}
+      {/* handle anchor stubs */}
+      {[-0.6, 0.6].map((x, i) => (
+        <mesh key={i} position={[x, -0.02, 0]}>
+          <cylinderGeometry args={[0.05, 0.06, 0.16, 12]} />
+          <meshStandardMaterial color="#5C3F2A" />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/* ----- Folded lavender throw spilling over the right rim ----- */
+function BasketThrow() {
+  return (
+    <group>
+      {/* main folded panel inside the basket */}
+      <mesh position={[0.05, 0.95, 0.0]} rotation={[0.05, 0.0, -0.04]} castShadow>
+        <boxGeometry args={[1.0, 0.05, 0.85]} />
+        <meshStandardMaterial color={PALETTE.cushionLavender} roughness={1} />
+      </mesh>
+      {/* second softer fold layered */}
+      <mesh position={[0.18, 0.99, -0.08]} rotation={[-0.05, 0.1, -0.08]} castShadow>
+        <boxGeometry args={[0.85, 0.05, 0.7]} />
+        <meshStandardMaterial color="#B9ACC5" roughness={1} />
+      </mesh>
+      {/* spilling fold cascading over the right rim toward the camera */}
+      <mesh position={[0.55, 0.65, 0.55]} rotation={[0.55, -0.18, -0.6]} castShadow>
+        <boxGeometry args={[0.5, 0.05, 0.7]} />
+        <meshStandardMaterial color={PALETTE.cushionLavender} roughness={1} />
+      </mesh>
+      {/* longer spill over the front with knit fringe */}
+      <mesh position={[0.7, 0.35, 0.7]} rotation={[1.1, -0.15, -0.5]} castShadow>
+        <boxGeometry args={[0.42, 0.05, 0.5]} />
+        <meshStandardMaterial color="#A99CB5" roughness={1} />
+      </mesh>
+      {/* fringe edge */}
+      <mesh position={[0.78, 0.18, 0.78]} rotation={[1.18, -0.15, -0.5]}>
+        <boxGeometry args={[0.4, 0.03, 0.04]} />
+        <meshStandardMaterial color="#8E7C9A" roughness={1} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ----- 6 phones inside the basket, varied angles ----- */
+function BasketPhones() {
+  const phones = [
+    { x: -0.42, y: 1.18, z: 0.05, rot: [-0.4, 0.2, -0.05], screen: '#7BA8C8', sticker: '☾', stickerC: PALETTE.gold },
+    { x: -0.18, y: 1.22, z: 0.12, rot: [-0.55, -0.05, 0.0], screen: '#F3A6B0', sticker: null },
+    { x: 0.10, y: 1.26, z: 0.08, rot: [-0.5, 0.1, 0.04], screen: '#C9B8E0', sticker: '✦', stickerC: PALETTE.gold },
+    { x: 0.34, y: 1.20, z: 0.0, rot: [-0.45, -0.15, -0.06], screen: '#1F1828', sticker: null },
+    { x: -0.10, y: 1.16, z: -0.18, rot: [-0.3, 0.3, 0.1], screen: '#E2D2EE', sticker: '☾', stickerC: PALETTE.cushionPlum },
+    { x: 0.22, y: 1.14, z: -0.25, rot: [-0.25, -0.25, -0.05], screen: '#FBE2C2', sticker: null },
+  ];
+  return (
+    <group>
+      {phones.map((p, i) => (
+        <PhoneCard key={i} {...p} />
+      ))}
+    </group>
+  );
+}
+
+function PhoneCard({ x, y, z, rot, screen, sticker, stickerC }) {
+  return (
+    <group position={[x, y, z]} rotation={rot}>
+      {/* phone body */}
+      <RoundedBox args={[0.24, 0.46, 0.028]} radius={0.026} smoothness={4}>
+        <meshStandardMaterial color="#0F0A14" roughness={0.45} metalness={0.25} />
+      </RoundedBox>
+      {/* dim screen */}
+      <mesh position={[0, 0.01, 0.016]}>
+        <planeGeometry args={[0.2, 0.4]} />
+        <meshStandardMaterial color={screen} emissive={screen} emissiveIntensity={0.3} toneMapped={false} />
+      </mesh>
+      {/* tiny notch / camera dot */}
+      <mesh position={[0, 0.2, 0.018]}>
+        <circleGeometry args={[0.012, 12]} />
+        <meshStandardMaterial color="#000000" />
+      </mesh>
+      {/* sticker */}
+      {sticker && (
+        <Text position={[-0.06, -0.13, 0.018]} fontSize={0.06} color={stickerC} anchorX="center" anchorY="middle">
+          {sticker}
+        </Text>
+      )}
+    </group>
+  );
+}
+
+/* ----- Tassel detail (knot + dangling strings) ----- */
+function Tassel({ position }) {
+  return (
+    <group position={position}>
+      {/* twine attaching to handle */}
+      <mesh position={[0, 0.12, 0]}>
+        <cylinderGeometry args={[0.005, 0.005, 0.24, 6]} />
+        <meshStandardMaterial color="#7A5232" />
+      </mesh>
+      {/* gold cap bead */}
+      <mesh position={[0, 0.0, 0]}>
+        <cylinderGeometry args={[0.025, 0.025, 0.05, 14]} />
+        <meshStandardMaterial color={PALETTE.gold} metalness={0.85} roughness={0.35} />
+      </mesh>
+      {/* knot ball */}
+      <mesh position={[0, -0.05, 0]}>
+        <sphereGeometry args={[0.04, 14, 12]} />
+        <meshStandardMaterial color="#D4A878" roughness={0.85} />
+      </mesh>
+      {/* dangling strings */}
+      {[-0.022, -0.008, 0.005, 0.018].map((x, i) => (
+        <mesh key={i} position={[x, -0.18, ((i % 2) - 0.5) * 0.012]}>
+          <cylinderGeometry args={[0.005, 0.005, 0.22, 6]} />
+          <meshStandardMaterial
+            color={['#D4A878', '#E2C09B', '#C49A6F', '#D4A878'][i]}
+            roughness={0.85}
+          />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -1898,6 +2151,61 @@ function FloorLamp({ position }) {
         );
       })}
       <pointLight position={[0, 0.7, 0]} intensity={0.65} color={PALETTE.amber} distance={4.5} />
+    </group>
+  );
+}
+
+/* ----- Tall leafy plant (deep green, large oval leaves) -----
+ * Used behind the phone parking basket to add lush depth.
+ */
+function LeafyPlant({ position }) {
+  const leaves = useMemo(
+    () => [
+      { x: 0.0,  z: 0.0,  h: 1.5, ax: 0.0,  az: -0.55, scale: 1.0,  c: '#2D5A38' },
+      { x: 0.05, z: 0.05, h: 1.2, ax: -0.4, az: 0.25,  scale: 0.85, c: '#3D6A48' },
+      { x: -0.05,z: 0.05, h: 1.4, ax: 0.45, az: 0.4,   scale: 0.95, c: '#2D5A38' },
+      { x: 0.0,  z: -0.08,h: 1.1, ax: -0.3, az: -0.65, scale: 0.8,  c: '#4D7A58' },
+      { x: 0.08, z: -0.04,h: 1.5, ax: -0.6, az: -0.1,  scale: 0.95, c: '#3D6A48' },
+      { x: -0.08,z: -0.04,h: 1.0, ax: 0.55, az: 0.0,   scale: 0.78, c: '#2D5A38' },
+      { x: 0.0,  z: 0.08, h: 1.6, ax: 0.0,  az: 0.7,   scale: 1.05, c: '#3D6A48' },
+      { x: 0.06, z: 0.0,  h: 1.0, ax: -0.25,az: 0.5,   scale: 0.7,  c: '#558A60' },
+    ],
+    []
+  );
+  return (
+    <group position={position}>
+      {/* terracotta pot */}
+      <mesh position={[0, 0.32, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.32, 0.42, 0.64, 24]} />
+        <meshStandardMaterial color="#7A4F38" roughness={0.85} />
+      </mesh>
+      {/* darker rim */}
+      <mesh position={[0, 0.66, 0]}>
+        <cylinderGeometry args={[0.34, 0.32, 0.06, 24]} />
+        <meshStandardMaterial color="#5C3F2A" roughness={0.85} />
+      </mesh>
+      {/* soil */}
+      <mesh position={[0, 0.69, 0]}>
+        <cylinderGeometry args={[0.3, 0.3, 0.02, 24]} />
+        <meshStandardMaterial color="#231310" roughness={1} />
+      </mesh>
+      {/* large leaves */}
+      {leaves.map((leaf, i) => (
+        <group key={i} position={[leaf.x, 0.7, leaf.z]} rotation={[leaf.ax, 0, leaf.az]}>
+          <mesh position={[0, leaf.h / 2, 0]}>
+            <cylinderGeometry args={[0.014, 0.014, leaf.h, 6]} />
+            <meshStandardMaterial color="#2A4A28" roughness={0.85} />
+          </mesh>
+          <mesh
+            position={[0, leaf.h + 0.34, 0]}
+            scale={[leaf.scale * 1.7, leaf.scale * 0.05, leaf.scale * 1.05]}
+            castShadow
+          >
+            <sphereGeometry args={[0.32, 16, 10]} />
+            <meshStandardMaterial color={leaf.c} roughness={0.85} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }
