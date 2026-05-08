@@ -1399,10 +1399,25 @@ const fairyLights = [];
 function createSkyStrand(from, to, count, color) {
   const a = new THREE.Vector3(...from);
   const b = new THREE.Vector3(...to);
+
+  // 1. Build the sagging curve points
+  const points = [];
   for (let i = 0; i < count; i++) {
     const t = i / (count - 1);
     const p = new THREE.Vector3().lerpVectors(a, b, t);
-    p.y -= Math.sin(t * Math.PI) * 1.6; // sag
+    p.y -= Math.sin(t * Math.PI) * 1.6; // sag in the middle
+    points.push(p);
+  }
+
+  // 2. Visible wire — thin TubeGeometry along the same curve
+  const curve = new THREE.CatmullRomCurve3(points);
+  const tubeGeom = new THREE.TubeGeometry(curve, count * 3, 0.025, 6, false);
+  const wireMat = new THREE.MeshBasicMaterial({ color: 0x1F0E2A });
+  const wire = new THREE.Mesh(tubeGeom, wireMat);
+  scene.add(wire);
+
+  // 3. Bulbs at each point along the wire
+  points.forEach((p) => {
     const bulb = new THREE.Mesh(
       new THREE.SphereGeometry(0.22, 8, 6),
       new THREE.MeshBasicMaterial({ color })
@@ -1411,7 +1426,7 @@ function createSkyStrand(from, to, count, color) {
     bulb.userData.basePhase = Math.random() * Math.PI * 2;
     scene.add(bulb);
     fairyLights.push(bulb);
-  }
+  });
 }
 createSkyStrand([-44, 22, -22], [44, 22, -22], 32, 0xFFD7A8);
 createSkyStrand([-44, 24, 22],  [44, 24, 22],  32, 0xF3A6B0);

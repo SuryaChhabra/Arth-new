@@ -523,7 +523,7 @@ function CeilingLights() {
 }
 
 function Strand({ from, to, count, color }) {
-  const positions = useMemo(() => {
+  const { positions, wireGeom } = useMemo(() => {
     const a = new THREE.Vector3(...from);
     const b = new THREE.Vector3(...to);
     const out = [];
@@ -533,24 +533,33 @@ function Strand({ from, to, count, color }) {
       p.y -= Math.sin(t * Math.PI) * 0.7;
       out.push(p);
     }
-    return out;
+    const curve = new THREE.CatmullRomCurve3(out);
+    const wire = new THREE.TubeGeometry(curve, count * 3, 0.014, 6, false);
+    return { positions: out, wireGeom: wire };
   }, [from, to, count]);
-  const ref = useRef();
+
+  const bulbsRef = useRef();
   useFrame((s) => {
-    if (!ref.current) return;
+    if (!bulbsRef.current) return;
     const t = s.clock.elapsedTime;
-    ref.current.children.forEach((m, i) => {
+    bulbsRef.current.children.forEach((m, i) => {
       m.material.emissiveIntensity = 0.7 + Math.sin(t * 2 + i * 0.6) * 0.25;
     });
   });
+
   return (
-    <group ref={ref}>
-      {positions.map((p, i) => (
-        <mesh key={i} position={[p.x, p.y, p.z]}>
-          <sphereGeometry args={[0.12, 12, 10]} />
-          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.85} toneMapped={false} />
-        </mesh>
-      ))}
+    <group>
+      <mesh geometry={wireGeom}>
+        <meshBasicMaterial color="#3A2750" />
+      </mesh>
+      <group ref={bulbsRef}>
+        {positions.map((p, i) => (
+          <mesh key={i} position={[p.x, p.y, p.z]}>
+            <sphereGeometry args={[0.12, 12, 10]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.85} toneMapped={false} />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 }
@@ -815,35 +824,45 @@ function SkyFairyLights() {
 }
 
 function SkyStrand({ from, to, count, color }) {
-  const positions = useMemo(() => {
+  const { positions, wireGeom } = useMemo(() => {
     const a = new THREE.Vector3(...from);
     const b = new THREE.Vector3(...to);
     const out = [];
     for (let i = 0; i < count; i++) {
       const t = i / (count - 1);
       const p = new THREE.Vector3().lerpVectors(a, b, t);
-      // sag down toward middle
       p.y -= Math.sin(t * Math.PI) * 1.2;
       out.push(p);
     }
-    return out;
+    const curve = new THREE.CatmullRomCurve3(out);
+    const wire = new THREE.TubeGeometry(curve, count * 3, 0.018, 6, false);
+    return { positions: out, wireGeom: wire };
   }, [from, to, count]);
-  const ref = useRef();
+
+  const bulbsRef = useRef();
   useFrame((state) => {
-    if (!ref.current) return;
+    if (!bulbsRef.current) return;
     const t = state.clock.elapsedTime;
-    ref.current.children.forEach((m, i) => {
+    bulbsRef.current.children.forEach((m, i) => {
       m.material.emissiveIntensity = 0.7 + Math.sin(t * 1.8 + i * 0.4) * 0.32;
     });
   });
+
   return (
-    <group ref={ref}>
-      {positions.map((p, i) => (
-        <mesh key={i} position={[p.x, p.y, p.z]}>
-          <sphereGeometry args={[0.13, 8, 6]} />
-          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.85} toneMapped={false} />
-        </mesh>
-      ))}
+    <group>
+      {/* visible wire */}
+      <mesh geometry={wireGeom}>
+        <meshBasicMaterial color="#1F0E2A" />
+      </mesh>
+      {/* bulbs */}
+      <group ref={bulbsRef}>
+        {positions.map((p, i) => (
+          <mesh key={i} position={[p.x, p.y, p.z]}>
+            <sphereGeometry args={[0.13, 8, 6]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.85} toneMapped={false} />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 }
