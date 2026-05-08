@@ -8,6 +8,17 @@ import { BOOTHS, BOOTH_ORDER } from '@/lib/booths';
 import { useArthStore } from '@/lib/store';
 import Guide from './Guide';
 
+function mulberry32(a) {
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 const PORTAL_LAYOUT = [
   { id: 'sojao',     x: -4.4, z:  1.4, ry:  0.32 },
   { id: 'iron',      x: -2.3, z:  0.4, ry:  0.18 },
@@ -30,6 +41,7 @@ export default function Plaza() {
       <pointLight position={[7, 5, 4]} intensity={0.9} color="#F3A6B0" distance={20} />
       <pointLight position={[0, 4, -6]} intensity={1.0} color="#FFB36B" distance={18} />
 
+      <NightAtmosphere />
       <LobbyShell />
       <HeroBackdrop />
       <CentralInstallation position={[0, 0.05, -2.5]} />
@@ -660,5 +672,250 @@ function FloorCushion({ position, color }) {
     <RoundedBox args={[1, 0.3, 1]} radius={0.1} position={[position[0], 0.15, position[2]]}>
       <meshStandardMaterial color={color} roughness={0.95} />
     </RoundedBox>
+  );
+}
+
+/* =====================================================
+ * NIGHT ATMOSPHERE
+ * Dark park surrounding the booth: scattered low-poly
+ * trees in three rings, starfield overhead, multiple
+ * fairy-light strands strung across the sky, warm
+ * floating lanterns at varied heights.
+ * ===================================================== */
+function NightAtmosphere() {
+  return (
+    <group>
+      {/* very dark distant ground plane behind the lobby floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
+        <circleGeometry args={[55, 64]} />
+        <meshStandardMaterial color="#241636" roughness={1} />
+      </mesh>
+      <ScatteredTrees />
+      <Starfield />
+      <SkyFairyLights />
+      <FloatingLanterns />
+      <DistantGroundLights />
+    </group>
+  );
+}
+
+function ScatteredTrees() {
+  const trees = useMemo(() => {
+    const rng = mulberry32(7531);
+    const out = [];
+    const rings = [
+      { count: 16, radius: 12.5, jitter: 1.4, h: [2.6, 3.6], leaves: ['#3D5C3A', '#4F7A4A', '#5C8A5C'] },
+      { count: 18, radius: 18,   jitter: 2.0, h: [3.2, 4.6], leaves: ['#2D4A28', '#3D5C3A', '#4F7A4A'] },
+      { count: 22, radius: 26,   jitter: 3.0, h: [3.8, 5.4], leaves: ['#1F3A22', '#2D4A28', '#3D5C3A', '#4A6E45'] },
+      { count: 18, radius: 36,   jitter: 4.0, h: [4.2, 6.0], leaves: ['#162A1A', '#1F3A22', '#2D4A28'] },
+    ];
+    rings.forEach((ring) => {
+      for (let i = 0; i < ring.count; i++) {
+        const a = (i / ring.count) * Math.PI * 2 + (rng() - 0.5) * 0.4;
+        const r = ring.radius + (rng() - 0.5) * ring.jitter * 2;
+        const x = Math.cos(a) * r;
+        const z = Math.sin(a) * r;
+        // skip trees that would obstruct the booth view (camera is at +z)
+        if (z > 6 && Math.abs(x) < 5 && r < 20) continue;
+        const h = ring.h[0] + rng() * (ring.h[1] - ring.h[0]);
+        const leafColor = ring.leaves[Math.floor(rng() * ring.leaves.length)];
+        const trunkSway = rng() * 0.4 - 0.2;
+        out.push({ x, z, h, leafColor, trunkSway });
+      }
+    });
+    return out;
+  }, []);
+  return (
+    <group>
+      {trees.map((t, i) => (
+        <PixelTree key={i} position={[t.x, 0, t.z]} height={t.h} leafColor={t.leafColor} sway={t.trunkSway} />
+      ))}
+    </group>
+  );
+}
+
+function PixelTree({ position, height, leafColor, sway = 0 }) {
+  const trunkColor = '#2F1F18';
+  return (
+    <group position={position} rotation={[0, sway, 0]}>
+      {/* trunk */}
+      <mesh position={[0, height / 2, 0]} castShadow>
+        <boxGeometry args={[0.5, height, 0.5]} />
+        <meshStandardMaterial color={trunkColor} roughness={0.95} />
+      </mesh>
+      {/* stacked leaf blocks */}
+      {[1.9, 1.4, 0.85].map((s, i) => (
+        <mesh key={i} position={[0, height + 0.55 + i * 0.7, 0]} castShadow>
+          <boxGeometry args={[s, 0.85, s]} />
+          <meshStandardMaterial color={leafColor} roughness={0.9} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Starfield() {
+  const starGeom = useMemo(() => {
+    const rng = mulberry32(2024);
+    const positions = [];
+    for (let i = 0; i < 700; i++) {
+      // upper hemisphere distribution
+      const theta = rng() * Math.PI * 2;
+      const phi = rng() * Math.PI * 0.55; // 0 = top
+      const r = 50 + rng() * 35;
+      positions.push(
+        Math.sin(phi) * Math.cos(theta) * r,
+        12 + Math.cos(phi) * r * 0.7,
+        Math.sin(phi) * Math.sin(theta) * r
+      );
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    return g;
+  }, []);
+  const ref = useRef();
+  const matRef = useRef();
+  useFrame((s, delta) => {
+    if (ref.current) ref.current.rotation.y += delta * 0.012;
+    if (matRef.current) matRef.current.opacity = 0.7 + Math.sin(s.clock.elapsedTime * 0.5) * 0.18;
+  });
+  return (
+    <points ref={ref} geometry={starGeom}>
+      <pointsMaterial
+        ref={matRef}
+        color="#FFE7B8"
+        size={0.4}
+        transparent
+        opacity={0.85}
+        sizeAttenuation
+        toneMapped={false}
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
+function SkyFairyLights() {
+  // Many strands of warm fairy lights crisscrossing the night sky.
+  const strands = [
+    { from: [-15, 11, -7], to: [15, 11, -7], count: 26, color: '#FFD7A8' },
+    { from: [-15, 13, 4],  to: [15, 13, 4],  count: 26, color: '#F3A6B0' },
+    { from: [-13, 12, -4], to: [13, 14, 6],  count: 24, color: '#FBE2C2' },
+    { from: [13, 12, -4],  to: [-13, 14, 6], count: 24, color: '#FFD7A8' },
+    { from: [-19, 9, 0],   to: [-13, 13, -8], count: 18, color: '#F3A6B0' },
+    { from: [19, 9, 0],    to: [13, 13, -8],  count: 18, color: '#F3A6B0' },
+    { from: [-9, 15, 5],   to: [9, 15, 5],   count: 22, color: '#FFE7B8' },
+    { from: [-7, 16, -3],  to: [7, 16, -3],  count: 20, color: '#FFD7A8' },
+  ];
+  return (
+    <group>
+      {strands.map((s, i) => <SkyStrand key={i} {...s} />)}
+    </group>
+  );
+}
+
+function SkyStrand({ from, to, count, color }) {
+  const positions = useMemo(() => {
+    const a = new THREE.Vector3(...from);
+    const b = new THREE.Vector3(...to);
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const t = i / (count - 1);
+      const p = new THREE.Vector3().lerpVectors(a, b, t);
+      // sag down toward middle
+      p.y -= Math.sin(t * Math.PI) * 1.2;
+      out.push(p);
+    }
+    return out;
+  }, [from, to, count]);
+  const ref = useRef();
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = state.clock.elapsedTime;
+    ref.current.children.forEach((m, i) => {
+      m.material.emissiveIntensity = 0.7 + Math.sin(t * 1.8 + i * 0.4) * 0.32;
+    });
+  });
+  return (
+    <group ref={ref}>
+      {positions.map((p, i) => (
+        <mesh key={i} position={[p.x, p.y, p.z]}>
+          <sphereGeometry args={[0.13, 8, 6]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.85} toneMapped={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function FloatingLanterns() {
+  const lanterns = useMemo(() => {
+    const rng = mulberry32(9241);
+    const out = [];
+    for (let i = 0; i < 28; i++) {
+      const a = rng() * Math.PI * 2;
+      const r = 6 + rng() * 22;
+      const x = Math.cos(a) * r;
+      const z = Math.sin(a) * r;
+      const y = 4 + rng() * 9;
+      const phase = rng() * Math.PI * 2;
+      out.push({ x, y, z, phase, baseY: y });
+    }
+    return out;
+  }, []);
+  const ref = useRef();
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = state.clock.elapsedTime;
+    ref.current.children.forEach((g, i) => {
+      g.position.y = lanterns[i].baseY + Math.sin(t * 0.45 + lanterns[i].phase) * 0.65;
+      const m = g.children[0];
+      if (m && m.material) {
+        m.material.emissiveIntensity = 0.85 + Math.sin(t * 1.4 + lanterns[i].phase) * 0.28;
+      }
+    });
+  });
+  return (
+    <group ref={ref}>
+      {lanterns.map((l, i) => (
+        <group key={i} position={[l.x, l.baseY, l.z]}>
+          <mesh>
+            <sphereGeometry args={[0.18, 10, 8]} />
+            <meshStandardMaterial color="#FFD7A8" emissive="#FFB36B" emissiveIntensity={0.95} toneMapped={false} />
+          </mesh>
+          {/* tiny string going up */}
+          <mesh position={[0, 0.9, 0]}>
+            <cylinderGeometry args={[0.005, 0.005, 1.6, 4]} />
+            <meshStandardMaterial color="#3A2750" />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function DistantGroundLights() {
+  // Tiny warm pinprick lights on the dark park ground for depth.
+  const lights = useMemo(() => {
+    const rng = mulberry32(1717);
+    const out = [];
+    for (let i = 0; i < 40; i++) {
+      const a = rng() * Math.PI * 2;
+      const r = 14 + rng() * 24;
+      const x = Math.cos(a) * r;
+      const z = Math.sin(a) * r;
+      out.push({ x, z });
+    }
+    return out;
+  }, []);
+  return (
+    <group>
+      {lights.map((l, i) => (
+        <mesh key={i} position={[l.x, 0.18, l.z]}>
+          <sphereGeometry args={[0.08, 6, 6]} />
+          <meshStandardMaterial color="#FFD7A8" emissive="#FFB36B" emissiveIntensity={1.1} toneMapped={false} />
+        </mesh>
+      ))}
+    </group>
   );
 }

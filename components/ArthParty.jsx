@@ -41,7 +41,7 @@ export default function ArthParty() {
 
   const bgGradient = useMemo(() => {
     if (!activeBooth) {
-      return 'radial-gradient(circle at 50% 60%, #FBE2C2 0%, #F3A6B0 38%, #5B3A55 78%, #1a0f1c 100%)';
+      return 'radial-gradient(circle at 50% 78%, #4A2F62 0%, #2A1828 45%, #150A1F 100%)';
     }
     const p = BOOTHS[activeBooth].palette;
     return `radial-gradient(circle at 50% 55%, ${p.glow}cc 0%, ${p.base} 65%, #2a1828 100%)`;
@@ -68,6 +68,7 @@ export default function ArthParty() {
         </Suspense>
 
         <Suspense fallback={null}>
+          {!activeBooth && <fogExp2 attach="fog" args={['#1F0E2A', 0.022]} />}
           <SceneLights activeBooth={activeBooth} />
 
           <SceneFader sceneKey={activeBooth || 'lobby'}>
@@ -106,21 +107,26 @@ function SceneFader({ sceneKey, children }) {
 
 function SceneLights({ activeBooth }) {
   const palette = activeBooth ? BOOTHS[activeBooth].palette : null;
+  const lobby = !activeBooth;
   return (
     <>
-      <ambientLight intensity={0.6} />
-      <hemisphereLight intensity={0.45} color="#FBE2C2" groundColor="#5B3A55" />
+      <ambientLight intensity={lobby ? 0.42 : 0.6} color={lobby ? '#7A5B8C' : '#ffffff'} />
+      <hemisphereLight intensity={lobby ? 0.32 : 0.45} color={lobby ? '#C9B8E0' : '#FBE2C2'} groundColor="#2A1828" />
       <directionalLight
         position={[6, 14, 8]}
-        intensity={0.95}
+        intensity={lobby ? 0.55 : 0.95}
+        color={lobby ? '#C9B8E0' : '#ffffff'}
         castShadow
         shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-12}
-        shadow-camera-right={12}
-        shadow-camera-top={12}
-        shadow-camera-bottom={-12}
+        shadow-camera-left={-14}
+        shadow-camera-right={14}
+        shadow-camera-top={14}
+        shadow-camera-bottom={-14}
       />
-      <directionalLight position={[-8, 10, -4]} intensity={0.45} color={palette ? palette.accent : '#F3A6B0'} />
+      <directionalLight position={[-8, 10, -4]} intensity={lobby ? 0.35 : 0.45} color={lobby ? '#F3A6B0' : (palette ? palette.accent : '#F3A6B0')} />
+      {/* Warm pool over the booth stage in lobby mode so the booth itself stays bright */}
+      {lobby && <pointLight position={[0, 5.5, 1]} intensity={1.3} color="#FFB36B" distance={18} />}
+      {lobby && <pointLight position={[0, 4, -3]} intensity={0.9} color="#F3A6B0" distance={14} />}
     </>
   );
 }
