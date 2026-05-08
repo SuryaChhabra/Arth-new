@@ -59,13 +59,17 @@ export default function ArthParty() {
       <Canvas
         shadows
         dpr={[1, 1.6]}
-        camera={{ position: [0, 5.6, 15.5], fov: 42, near: 0.1, far: 120 }}
+        camera={{ position: [0, 3.6, 10], fov: 42, near: 0.1, far: 120 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
       >
+        {/* Environment is isolated so a failed HDR load can't blank the scene */}
+        <Suspense fallback={null}>
+          <SceneEnvironment activeBooth={activeBooth} />
+        </Suspense>
+
         <Suspense fallback={null}>
           <SceneLights activeBooth={activeBooth} />
 
-          {/* AnimatePresence for scene swap */}
           <SceneFader sceneKey={activeBooth || 'lobby'}>
             <Scene />
           </SceneFader>
@@ -104,8 +108,8 @@ function SceneLights({ activeBooth }) {
   const palette = activeBooth ? BOOTHS[activeBooth].palette : null;
   return (
     <>
-      <ambientLight intensity={0.55} />
-      <hemisphereLight intensity={0.4} color="#FBE2C2" groundColor="#5B3A55" />
+      <ambientLight intensity={0.6} />
+      <hemisphereLight intensity={0.45} color="#FBE2C2" groundColor="#5B3A55" />
       <directionalLight
         position={[6, 14, 8]}
         intensity={0.95}
@@ -116,10 +120,14 @@ function SceneLights({ activeBooth }) {
         shadow-camera-top={12}
         shadow-camera-bottom={-12}
       />
-      <directionalLight position={[-8, 10, -4]} intensity={0.4} color={palette ? palette.accent : '#F3A6B0'} />
-      <Environment preset="apartment" />
+      <directionalLight position={[-8, 10, -4]} intensity={0.45} color={palette ? palette.accent : '#F3A6B0'} />
     </>
   );
+}
+
+function SceneEnvironment({ activeBooth }) {
+  // kept separate so a failed HDR fetch can't take the rest of the scene down
+  return <Environment preset="apartment" />;
 }
 
 function BoothEntryFlash() {

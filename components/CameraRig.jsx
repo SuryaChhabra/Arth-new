@@ -8,9 +8,9 @@ import { useArthStore } from '@/lib/store';
 // Camera presets per scene. Each entry frames the diorama nicely.
 const PRESETS = {
   lobby: {
-    pos: [0, 5.6, 15.5],
-    look: [0, 3, -1],
-    orbit: 0.55,
+    pos: [0, 3.6, 10],
+    look: [0, 2.4, 0],
+    orbit: 0.32,
   },
   booth: {
     pos: [0, 4.2, 12.5],
